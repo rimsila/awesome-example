@@ -3,7 +3,5 @@
 @tailwind utilities;
 
 body {
-  background: white;
-  min-height: 100vh;
-  padding: 4rem;
+  @apply bg-gray-800 min-h-screen;
 }
