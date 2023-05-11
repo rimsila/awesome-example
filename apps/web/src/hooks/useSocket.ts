@@ -3,8 +3,6 @@ import { io, Socket, SocketOptions } from 'socket.io-client';
 
 type EventListeners = { [event: string]: (...args: any[]) => void };
 
-const sockets: { [url: string]: Socket } = {};
-
 
 export const useSocket = (
   url: string,
@@ -55,7 +53,7 @@ export const useSocket = (
       eventListenersRef.current = {};
       socketRef.current?.disconnect();
     };
-  }, [url, options]);
+  }, []);
 
   return { isConnected, socketOn, socketEmit };
 };

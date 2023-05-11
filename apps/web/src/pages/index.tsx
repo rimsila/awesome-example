@@ -13,12 +13,12 @@ const Home = (props) => {
     {
       label: "Chat Socket",
       icon: "https://via.placeholder.com/50",
-      path: "/chat?title=Chat Socket",
+      path: "/chat",
     },
     {
-      label: "Todo List (Soon)",
+      label: "Todo List (Local State)",
       icon: "https://via.placeholder.com/50",
-      path: "/404",
+      path: "/todo",
     },
     {
       label: "Redux (Soon)",
@@ -32,12 +32,12 @@ const Home = (props) => {
       <div className="grid grid-cols-3 gap-4 p-4">
         {apps.map((app, key) => (
           <div
-            onClick={() => push(app.path)}
+            onClick={() => push(`${app.path}/?title=${app.label}`)}
             key={key}
             className="flex cursor-pointer opacity-75 flex-col items-center justify-center p-4 border border-gray-300 rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-150"
           >
             <img className="w-16 h-16 rounded" src={app.icon} alt={app.label} />
-            <p className="mt-2 text-sm font-semibold">{app.label}</p>
+            <p className="mt-2 text-xs font-semibold">{app.label}</p>
           </div>
         ))}
       </div>
