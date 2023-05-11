@@ -1,12 +1,12 @@
 import { useRouter } from "next/router";
 import "../styles/globals.css";
-import 'antd/dist/reset.css'
+import "antd/dist/reset.css";
 
 import type { AppProps } from "next/app";
 
 const IconBack = () => {
   const { back, pathname } = useRouter();
-  if (pathname === "/") return null;
+  if (pathname === "/") return <div />;
   return (
     <svg
       onClick={back}
@@ -19,17 +19,29 @@ const IconBack = () => {
   );
 };
 
+const Header = ({ title }: { title: any }) => {
+  return (
+    <div className="flex items-center justify-between bg-pink-200 p-4">
+      <IconBack />
+      <div className="flex flex-col text-center justify-center">
+        <h1 className="flex-1 text-xl font-bold text-center m-0">
+          {`Awesome App ${title && `- ${title}`}`}
+        </h1>
+        <p className="m-0 text-xs text-gray-600">
+          (All in one React collection demo)
+        </p>
+      </div>
+      <div />
+    </div>
+  );
+};
+
 export default function MyApp({ Component, ...rest }: AppProps) {
   const { title = "" } = (rest?.router as any).state?.query || {};
 
   return (
     <div className="flex flex-col h-screen w-full max-w-xl mx-auto bg-white">
-      <div className="flex items-center bg-pink-200 p-4">
-        <IconBack />
-        <h1 className="flex-1 text-xl font-bold text-center">
-          {`Awesome App ${title && `- ${title}`}`}
-        </h1>
-      </div>
+      <Header title={title} />
       <Component {...rest} />
     </div>
   );

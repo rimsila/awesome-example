@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useRouter } from "next/router";
 interface AppItem {
   label: string;
@@ -6,7 +6,7 @@ interface AppItem {
   path: string;
 }
 
-const Home = (props) => {
+const Home = () => {
   const { push } = useRouter();
 
   const apps: AppItem[] = [
@@ -16,15 +16,15 @@ const Home = (props) => {
       path: "/chat",
     },
     {
-      label: "Todo List (Local State)",
+      label: "Todo (All State)",
       icon: "https://via.placeholder.com/50",
       path: "/todo",
     },
     {
-      label: "Redux (Soon)",
+      label: "More coming soon...",
       icon: "https://via.placeholder.com/50",
-      path: "/404",
-    },
+      path: "/#",
+    }
   ];
 
   return (

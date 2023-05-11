@@ -1,11 +1,34 @@
 import React, { useEffect, useState } from "react";
-import { useSocket } from "../hooks/useSocket";
-import classnames from 'classnames'
+import { useSocket } from "../../hooks/useSocket";
+import classnames from "classnames";
+import { enterEtvWrapper } from "../../utils/dom";
+import { Button, Modal } from "antd";
+import { useLocalStorageState, useUpdateEffect } from "ahooks";
+import Router from "next/router";
+
 export default function Home() {
   const { socketOn, socketEmit, isConnected } = useSocket(
-    "http://localhost:4000"
+    "http://localhost:4000",
+    {
+      onConnectFailed: () => {
+        Modal.destroyAll();
+        Modal.error({
+          title: "Server Error",
+          content: "Socket server is not connect",
+          onOk: ()=> {
+            Router.back()
+            Modal.destroyAll();
+          },
+          okText: "Back Home",
+        });
+      },
+    }
   );
-  const [messages, setMessages] = useState<string[]>([]);
+
+  const [messages, setMessages] = useLocalStorageState<string[]>(
+    "messages-state",
+    { defaultValue: [] }
+  );
   const [inputMessage, setInputMessage] = useState("");
 
   useEffect(() => {
@@ -26,25 +49,27 @@ export default function Home() {
     setInputMessage("");
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      sendMessage();
-    }
-  };
-
   const renderEmpty = <h3>No chat history</h3>;
   const renderChat = messages.map((message, index) => (
-    <div key={index} className="max-w-sm p-3 mb-2 rounded-lg bg-blue-400 text-white">
+    <div
+      key={index}
+      className="max-w-sm p-3 mb-2 rounded-lg bg-blue-400 text-white"
+    >
       {message}
     </div>
   ));
 
-  const isHasData = messages?.length > 0
+  const isHasData = messages?.length > 0;
 
   return (
     <div className="flex flex-col h-screen w-full max-w-xl mx-auto">
-      <div className={classnames('flex flex-col flex-grow p-4 overflow-y-auto bg-gray-100', !isHasData && 'items-center justify-center')}>
-        { isHasData ? renderChat : renderEmpty}
+      <div
+        className={classnames(
+          "flex flex-col flex-grow p-4 overflow-y-auto bg-gray-100",
+          !isHasData && "items-center justify-center"
+        )}
+      >
+        {isHasData ? renderChat : renderEmpty}
       </div>
 
       <div className="flex p-4 bg-gray-200">
@@ -54,17 +79,11 @@ export default function Home() {
           placeholder="Type your message"
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={enterEtvWrapper(sendMessage)}
         />
-        <button
-          onClick={sendMessage}
-          disabled={!isConnected}
-          className={`px-6 py-2 font-semibold text-white bg-blue-600 rounded-lg ${
-            !isConnected ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
-          }`}
-        >
+        <Button onClick={sendMessage} disabled={!isConnected} type="primary">
           Send
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -1,16 +1,18 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { io, Socket, SocketOptions } from 'socket.io-client';
+import { useEffect, useState, useRef, useCallback } from "react";
+import { io, Socket, SocketOptions } from "socket.io-client";
 
 type EventListeners = { [event: string]: (...args: any[]) => void };
 
-
 export const useSocket = (
   url: string,
-  options?: SocketOptions,
+  options?: SocketOptions & {
+    onConnectFailed?: () => void;
+  }
 ) => {
   const [isConnected, setIsConnected] = useState(false);
   const eventListenersRef = useRef<EventListeners>({});
   const socketRef = useRef<Socket>();
+  const { onConnectFailed } = options || {};
 
   const socketOn = useCallback(
     (event: string, callback: (...args: any[]) => void) => {
@@ -28,12 +30,9 @@ export const useSocket = (
     []
   );
 
-  const socketEmit = useCallback(
-    (event: string, ...args: any[]) => {
-      socketRef.current?.emit(event, ...args);
-    },
-    []
-  );
+  const socketEmit = useCallback((event: string, ...args: any[]) => {
+    socketRef.current?.emit(event, ...args);
+  }, []);
 
   useEffect(() => {
     socketRef.current = io(url, options);
@@ -44,6 +43,14 @@ export const useSocket = (
 
     socketRef.current.on("disconnect", () => {
       setIsConnected(false);
+    });
+    socketRef.current.on("connect_error", (error) => {
+      console.log("Connection error:", error);
+      onConnectFailed?.();
+    });
+
+    socketRef.current.on("connect_timeout", () => {
+      console.log("Connection timeout");
     });
 
     return () => {
