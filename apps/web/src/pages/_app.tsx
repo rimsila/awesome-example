@@ -3,6 +3,7 @@ import "../styles/globals.css";
 import "antd/dist/reset.css";
 
 import type { AppProps } from "next/app";
+import classNames from "classnames";
 
 const IconBack = () => {
   const { back, pathname } = useRouter();
@@ -37,12 +38,18 @@ const Header = ({ title }: { title: any }) => {
 };
 
 export default function MyApp({ Component, ...rest }: AppProps) {
-  const { title = "" } = (rest?.router as any).state?.query || {};
+  const { title = "", pageFull } = (rest?.router as any).state?.query || {};
+  console.log("pageFull", pageFull == "1");
+
+  const clsWrapper = classNames(
+    "flex flex-col h-screen w-full mx-auto bg-white",
+    pageFull != "1" && "max-w-xl"
+  );
 
   return (
-    <div className="flex flex-col h-screen w-full max-w-xl mx-auto bg-white">
+    <div className={clsWrapper}>
       <Header title={title} />
-      <Component {...rest} />
+        <Component {...rest} />
     </div>
   );
 }

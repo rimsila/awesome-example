@@ -4,6 +4,7 @@ interface AppItem {
   label: string;
   icon: string;
   path: string;
+  pageFull?: number
 }
 
 const Home = () => {
@@ -21,9 +22,10 @@ const Home = () => {
       path: "/todo",
     },
     {
-      label: "More coming soon...",
+      label: "Antd Data Table",
       icon: "https://via.placeholder.com/50",
-      path: "/#",
+      path: "/data-table",
+      pageFull: 1
     }
   ];
 
@@ -32,7 +34,15 @@ const Home = () => {
       <div className="grid grid-cols-3 gap-4 p-4">
         {apps.map((app, key) => (
           <div
-            onClick={() => push(`${app.path}/?title=${app.label}`)}
+            onClick={() => {
+              push({
+                pathname: app.path,
+                query:{
+                  title: app.label,
+                  pageFull: app.pageFull
+                }
+              })
+            }}
             key={key}
             className="flex cursor-pointer opacity-75 flex-col items-center justify-center p-4 border border-gray-300 rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-150"
           >

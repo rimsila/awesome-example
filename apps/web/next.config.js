@@ -1,3 +1,5 @@
+/** @type {import('next').NextConfig} */
 module.exports = {
-  reactStrictMode: true,// it will cause re-rendering twice it working only in development 
+  // it will cause re-rendering twice it working only in development
+  reactStrictMode: true, 
 };
