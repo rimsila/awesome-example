@@ -8,7 +8,7 @@ type ITodo = {
 };
 type ITodoList = ITodo[];
 
-export const useTodo = () => {
+ const useTodo = () => {
   const [todo, setTodo] = useLocalStorageState<ITodoList>("todo-state", {
     defaultValue: [],
   });
@@ -99,3 +99,5 @@ export const useTodo = () => {
     todoEditIndex,
   };
 };
+
+export default useTodo
