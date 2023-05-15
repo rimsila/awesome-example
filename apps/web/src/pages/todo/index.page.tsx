@@ -55,10 +55,11 @@ export default function Todo() {
                 Edit {`${todoEditIndex === key ? "(Selected)" : ""}`}
               </a>,
               <Popconfirm
+              key='delete'
                 title="Are you sure to remove?"
                 onConfirm={deleteTodo.bind(null, item.id)}
               >
-                <Button type="link" key="more">
+                <Button type="link" >
                   Delete
                 </Button>
               </Popconfirm>,
