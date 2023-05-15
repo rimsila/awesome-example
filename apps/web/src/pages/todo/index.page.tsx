@@ -1,4 +1,4 @@
-import {  Button, Input, List } from "antd";
+import { Button, Input, List, Popconfirm, Space, Typography } from "antd";
 import useTodo from "./useTodo";
 import { enterEtvWrapper } from "../../utils/dom";
 
@@ -14,10 +14,17 @@ export default function Todo() {
     todo,
     deleteTodo,
     todoEditIndex,
+    resetTodo
   } = useTodo();
   return (
     <div className="min-h-[93vh] bg-gray-100 p-6">
-      <div className="flex gap-x-2">
+      {isEditMode && (
+        <Space align="center">
+          <Typography.Title className="!mb-0" level={4}>Edit: {todoTemp}</Typography.Title>
+          <Button size="small" onClick={resetTodo}>Clear</Button>
+        </Space>
+      )}
+      <div className="flex gap-x-2 mt-3">
         <Input
           showCount
           allowClear
@@ -30,14 +37,11 @@ export default function Todo() {
         <Button type="primary" disabled={!todoTemp} onClick={addOrEditTodo}>
           {isEditMode ? "Edit" : "Add"}
         </Button>
-        <Button
-          danger
-          type="primary"
-          disabled={isTodoEmpty}
-          onClick={removalAll}
-        >
-          Remove all tasks
-        </Button>
+        <Popconfirm title="Are you sure to remove all?" onConfirm={removalAll}>
+          <Button danger type="primary" disabled={isTodoEmpty}>
+            Remove all tasks
+          </Button>
+        </Popconfirm>
       </div>
 
       <List
@@ -50,9 +54,14 @@ export default function Todo() {
               <a key="edit" onClick={beforeEditTodo.bind(null, item.id)}>
                 Edit {`${todoEditIndex === key ? "(Selected)" : ""}`}
               </a>,
-              <Button type="link" onClick={deleteTodo.bind(null, item.id)} key="more">
-                Delete
-              </Button>,
+              <Popconfirm
+                title="Are you sure to remove?"
+                onConfirm={deleteTodo.bind(null, item.id)}
+              >
+                <Button type="link" key="more">
+                  Delete
+                </Button>
+              </Popconfirm>,
             ]}
           >
             <List.Item.Meta

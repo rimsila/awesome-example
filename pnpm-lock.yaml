@@ -52,6 +52,9 @@ importers:
       '@ant-design/pro-components':
         specifier: ^2.4.14
         version: 2.4.14(antd@5.4.7)(prop-types@15.8.1)(rc-field-form@1.30.0)(react-dom@18.2.0)(react@18.2.0)
+      '@ant-design/pro-utils':
+        specifier: ^2.8.7
+        version: 2.8.7(antd@5.4.7)(prop-types@15.8.1)(react-dom@18.2.0)(react@18.2.0)
       next:
         specifier: latest
         version: 13.1.6(react-dom@18.2.0)(react@18.2.0)

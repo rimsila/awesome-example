@@ -97,6 +97,7 @@ type ITodoList = ITodo[];
     todo,
     deleteTodo,
     todoEditIndex,
+    resetTodo
   };
 };
 
