@@ -1,4 +1,6 @@
-import { EditFilled, EyeFilled, PlusOutlined } from "@ant-design/icons";
+import EditFilled from "@ant-design/icons/EditFilled";
+import EyeFilled from "@ant-design/icons/EyeFilled";
+import PlusOutlined from "@ant-design/icons/PlusOutlined";
 
 import {
   ActionType,
@@ -8,133 +10,150 @@ import {
   ProTable,
   TableDropdown,
 } from "@ant-design/pro-components";
-import {
-  Button,
-  FormInstance,
-  Modal,
-} from "antd";
-import { useRef } from "react";
+import { Button, FormInstance, Modal } from "antd";
+import { useMemo, useRef } from "react";
 import axios from "axios";
-import { useCreation, useReactive } from "ahooks";
 
 type ToolBarProps<TData> = {
-  onAddClick?: (v: TData) => void;
+  onAddClick?: (v?: TData) => void;
 };
-type CrudType = 'view' | "edit" | 'table' | 'add'
 
-export type TblState<TState = Record<string, any>> = {
+type CrudType = "view" | "edit" | "table" | "add";
+
+export type State<TState = Record<string, any>> = {
   openCrudModal?: boolean;
   loadingEdit?: boolean;
-  crudType: CrudType
+  crudType: CrudType;
 } & TState;
 
-type PageProps<TData, TState> = {
-  tblState: ReturnType<typeof useReactive<TblState<TState>>>;
+export type PageProps<TData, TDetail = any> = {
+  state: State;
   crudProps: {
     form: FormInstance<TData>;
-    editUrl?: string
-    detailUrl?: string
-    listUrl?: string
-    actionsRender?: any[]
-    actionColProps?: ProColumns<TData, "text">
+    editUrl?: string;
+    detailUrl?: string;
+    listUrl?: string;
+    actionsRender?: any[];
+    actionColProps?: ProColumns<TData, "text">;
   };
   toolBarProps?: ToolBarProps<TData>;
 } & React.ComponentProps<typeof ProTable<TData>>;
 
-const DataTable = <TData extends any, TState = any, TDetail = unknown>(
-  props: PageProps<TData, TState>
+const DataTable = <TData extends any, TDetail = unknown>(
+  props: PageProps<TData, TDetail>
 ) => {
-  const { toolBarProps, tblState, crudProps, columns, ...tblProProps } =
-    props;
+  const { toolBarProps, state, crudProps, columns, ...tblProProps } = props;
 
-  const { actionsRender = [], actionColProps = {} } = crudProps || {}
-  const isAddMode = useCreation(() => {
-    return tblState.openCrudModal && tblState.crudType === 'add'
-  }, [tblState.openCrudModal, tblState.crudType])
-
-  const isViewMode = useCreation(() => {
-    return tblState.openCrudModal && tblState.crudType === 'view'
-  }, [tblState.openCrudModal, tblState.crudType])
-  const isEditMode = useCreation(() => {
-    return tblState.openCrudModal && tblState.crudType === 'edit'
-  }, [tblState.openCrudModal, tblState.crudType])
+  const { actionsRender = [], actionColProps = {} } = crudProps || {};
   const detailRef = useRef<ActionType>();
 
-  const setCrudType = (type: CrudType | 'reset') => {
-
-    if (type === 'reset') {
-      tblState.openCrudModal = false;
-      tblState.crudType = 'table'
-
-    } else {
-      tblState.openCrudModal = true;
-      tblState.crudType = type
+  const { isEditMode, isViewMode, isAddMode } = useMemo(() => {
+    const openCrudModal = state.openCrudModal;
+    const crudType = state.crudType;
+    const modes = {
+      edit: openCrudModal && crudType === "edit",
+      view: openCrudModal && crudType === "view",
+      add: openCrudModal && crudType === "add",
+    };
+    return {
+      isEditMode: modes.edit,
+      isViewMode: modes.view,
+      isAddMode: modes.add,
     }
-  }
+  }, [state.openCrudModal, state.crudType]);
+
+  const setCrudTypeAndModal = (type: CrudType | "reset") => {
+    if (type === "reset") {
+      state.openCrudModal = false;
+      state.crudType = "table";
+    } else {
+      state.openCrudModal = true;
+      state.crudType = type;
+    }
+  };
 
   const onClickEdit = (row: any) => {
-    setCrudType('edit')
+    setCrudTypeAndModal("edit");
     if (crudProps.editUrl) {
-      tblState.loadingEdit = true
-      axios.get(crudProps.editUrl).then((res) => {
-        const getInd = (res?.data?.data ?? [] as any[]).findIndex((item) => item.id === row.id)
-        crudProps.form.setFieldsValue(res?.data?.data[getInd] || {})
-        console.log('edit url', res.data);
-      }).catch(console.error).finally(() => {
-        tblState.loadingEdit = false
-      })
+      state.loadingEdit = true;
+      axios
+        .get(crudProps.editUrl)
+        .then((res) => {
+          const getInd = (res?.data?.data ?? ([] as any[])).findIndex(
+            (item) => item.id === row.id
+          );
+          crudProps.form.setFieldsValue(res?.data?.data[getInd] || {});
+        })
+        .catch(console.error)
+        .finally(() => {
+          state.loadingEdit = false;
+        });
     } else {
-      crudProps.form.setFieldsValue(row)
+      crudProps.form.setFieldsValue(row);
     }
-  }
+  };
 
-  const getColumns = useCreation(() => {
-    return [...columns,
-    {
-      fixed: 'right',
-      title: "Actions",
-      align: 'center',
-      width: 110,
-      valueType: "option",
-      dataIndex: "id",
-      render: (text, row) => [
-        <Button shape="circle" key="view" size="small" onClick={() => setCrudType('view')}>
-          <EyeFilled style={{ color: '#1677ff', fontSize: 20 }} />
-        </Button>
-        ,
-        <Button type="primary" shape="circle" key="edit" size="small" onClick={() => onClickEdit(row)}>
-          <EditFilled style={{ color: 'white', fontSize: 15 }} />
-        </Button>
-        ,
-        <TableDropdown
-          key="more"
-          menus={[
-            { key: "delete", name: "Delete" },
-          ]}
-        />,
-        ...actionsRender
-      ].filter(Boolean),
-      ...actionColProps
-
-    }]
-  }, [columns])
-
+  const getColumns = useMemo(() => {
+    return [
+      ...columns,
+      {
+        fixed: "right",
+        title: "Actions",
+        align: "center",
+        width: 110,
+        valueType: "option",
+        dataIndex: "id",
+        render: (text, row) =>
+          [
+            <Button
+              shape="circle"
+              key="view"
+              size="small"
+              onClick={() => setCrudTypeAndModal("view")}
+            >
+              <EyeFilled style={{ color: "#1677ff", fontSize: 20 }} />
+            </Button>,
+            <Button
+              type="primary"
+              shape="circle"
+              key="edit"
+              size="small"
+              onClick={() => onClickEdit(row)}
+            >
+              <EditFilled style={{ color: "white", fontSize: 15 }} />
+            </Button>,
+            <TableDropdown
+              key="more"
+              menus={[{ key: "delete", name: "Delete" }]}
+            />,
+            ...actionsRender,
+          ].filter(Boolean),
+        ...actionColProps,
+      },
+    ] as typeof columns
+  }, [columns]);
 
   return (
     <>
-      {(isAddMode || isEditMode) && <SchemaForm<TData>
-        form={crudProps.form}
-        columns={columns as any}
-        loading={tblState.loadingEdit}
-        layoutType="ModalForm"
-        open={tblState.openCrudModal}
-        modalProps={{
-          onCancel(_) {
-            tblState.openCrudModal = false
-          }
-        }}
-      />}
-      <Modal open={isViewMode} title="View Mode" onCancel={() => setCrudType('reset')}>
+      {(isAddMode || isEditMode) && (
+        <SchemaForm<TData>
+          form={crudProps.form}
+          columns={columns as any}
+          loading={state.loadingEdit}
+          layoutType="ModalForm"
+          open={state.openCrudModal}
+          modalProps={{
+            onCancel(_) {
+              state.openCrudModal = false;
+            },
+          }}
+        />
+      )}
+      <Modal
+        open={isViewMode}
+        title="View Mode"
+        onCancel={() => setCrudTypeAndModal("reset")}
+      >
         <ProDescriptions
           actionRef={detailRef}
           columns={columns as any}
@@ -147,12 +166,11 @@ const DataTable = <TData extends any, TState = any, TDetail = unknown>(
             ).data.data
           }
         />
-
       </Modal>
 
       <ProTable<TData>
         search={{
-          labelWidth: 'auto',
+          labelWidth: "auto",
         }}
         columns={getColumns as any}
         request={async (params = {}) =>
@@ -177,7 +195,7 @@ const DataTable = <TData extends any, TState = any, TDetail = unknown>(
                 if (toolBarProps?.onAddClick) {
                   toolBarProps?.onAddClick();
                 } else {
-                  setCrudType('add')
+                  setCrudTypeAndModal("add");
                 }
               }}
               icon={<PlusOutlined />}
@@ -192,4 +210,4 @@ const DataTable = <TData extends any, TState = any, TDetail = unknown>(
   );
 };
 
-export default DataTable
+export default DataTable;
