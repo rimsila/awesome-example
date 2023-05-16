@@ -1,99 +1,87 @@
 import { ActionType, ProColumns } from "@ant-design/pro-components";
 
 import { Form } from "antd";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useReactive } from "ahooks";
 import DataTable, { State } from "./table";
 
+interface Link {
+  previous?: any;
+  current: string;
+  next: string;
+}
+
+interface Pagination {
+  total: number;
+  pages: number;
+  page: number;
+  limit: number;
+  links: Link;
+}
+
+interface Meta {
+  pagination: Pagination;
+}
+
+interface Data {
+  id: number;
+  name: string;
+  email: string;
+  gender: string;
+  status: string;
+}
+
+interface RootObject {
+  meta: Meta;
+  data: Data[];
+}
+interface EditObject {
+  meta: Meta;
+  data: Data;
+}
+
 const Page = () => {
   const tblRef = useRef<ActionType>();
-  const tblState = useReactive<State>({
+  const tblState = useReactive<State<Data>>({
     openCrudModal: false,
     crudType: "table",
+    row: {},
   });
-  const [tblForm] = Form.useForm<GithubIssueItem>();
+  const [editForm] = Form.useForm<Data>();
 
-  type GithubIssueItem = {
-    url: string;
-    id: number;
-    number: number;
-    title: string;
-    labels: {
-      name: string;
-      color: string;
-    }[];
-    state: string;
-    comments: number;
-    created_at: string;
-    updated_at: string;
-    closed_at?: string;
-  };
-
-  const columns: ProColumns<GithubIssueItem>[] = [
+  const columns: ProColumns<Data[]>[] = [
     {
-      title: "序号",
-      dataIndex: "index",
+      title: "ID",
+      dataIndex: "id",
       width: 64,
-      valueType: "indexBorder",
     },
     {
-      title: "标题",
-      dataIndex: "title",
-      copyable: true,
-      ellipsis: true,
-      search: false,
-      formItemProps: {
-        rules: [
-          {
-            required: true,
-          },
-        ],
-      },
-    },
-    {
-      title: (_, type) => (type === "table" ? "状态" : "列表状态"),
-      dataIndex: "state",
-      initialValue: "all",
-      filters: true,
-      onFilter: true,
-      valueType: "select",
-      valueEnum: {
-        all: { text: "全部", status: "Default" },
-        open: {
-          text: "未解决",
-          status: "Error",
-        },
-        closed: {
-          text: "已解决",
-          status: "Success",
-        },
-      },
-    },
-    {
-      title: "排序方式",
-      key: "direction",
-      hideInTable: true,
-      hideInDescriptions: true,
-      dataIndex: "direction",
-      filters: true,
-      onFilter: true,
-      valueType: "select",
-      valueEnum: {
-        asc: "正序",
-        desc: "倒序",
-      },
+      title: "Name",
+      dataIndex: "name",
     },
   ];
 
+  console.log("state", tblState);
+
   return (
     <>
-      <DataTable<GithubIssueItem>
+      <DataTable<Data[], RootObject, EditObject>
         actionRef={tblRef}
         crudProps={{
-          form: tblForm,
+          form: editForm,
+          listResponse(res) {
+            return {
+              data: res?.data?.data || [],
+              success: true,
+            };
+          },
           detailUrl: "https://proapi.azurewebsites.net/github/issues",
-          editUrl: "https://proapi.azurewebsites.net/github/issues",
-          listUrl: "https://proapi.azurewebsites.net/github/issues",
+          editUrl: ({ id }) => `https://gorest.co.in/public/v1/users/${id}`,
+          listUrl: "https://gorest.co.in/public/v1/users",
+          editResponse(res) {
+            console.log("editResponse", res.data.data);
+            return  res.data.data
+          },
         }}
         columns={columns}
         state={tblState}

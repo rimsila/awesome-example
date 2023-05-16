@@ -1,6 +1,6 @@
 import dynamic from "next/dynamic";
 
-const DataTable = dynamic(() => import("./index.table"));
+const DataTable = dynamic(() => import("./index.table"), { ssr: false });
 
 const IndexPage = () => {
   return <DataTable />;

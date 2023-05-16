@@ -9,10 +9,12 @@ import {
   ProDescriptions,
   ProTable,
   TableDropdown,
+  RequestData,
 } from "@ant-design/pro-components";
 import { Button, FormInstance, Modal } from "antd";
 import { useMemo, useRef } from "react";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
+import { useMemoizedFn } from "ahooks";
 
 type ToolBarProps<TData> = {
   onAddClick?: (v?: TData) => void;
@@ -20,31 +22,57 @@ type ToolBarProps<TData> = {
 
 type CrudType = "view" | "edit" | "table" | "add";
 
-export type State<TState = Record<string, any>> = {
+export type State<TEditData> = {
   openCrudModal?: boolean;
   loadingEdit?: boolean;
   crudType: CrudType;
-} & TState;
+  row?: Partial<TEditData>;
+};
 
-export type PageProps<TData, TDetail = any> = {
-  state: State;
+export type PageProps<
+  TData,
+  TDataList,
+  TEditData = Record<any, any>,
+  TDetail = any
+> = {
+  state: State<TData>;
   crudProps: {
-    form: FormInstance<TData>;
-    editUrl?: string;
+    form: FormInstance<TEditData>;
+    editUrl?: (row: TEditData) => string;
     detailUrl?: string;
     listUrl?: string;
     actionsRender?: any[];
     actionColProps?: ProColumns<TData, "text">;
+    resDetailFieldKey?: string[];
+    resListFiledKey?: string[];
+    listTotal?: number;
+    listResponse?: (res?: AxiosResponse<TDataList, any>) => RequestData<any>;
+    editResponse?: (res?: AxiosResponse<TEditData, any>) => any;
+    detailResponse?: (res?: AxiosResponse<TDetail, any>) => Partial<TDetail>;
   };
   toolBarProps?: ToolBarProps<TData>;
 } & React.ComponentProps<typeof ProTable<TData>>;
 
-const DataTable = <TData extends any, TDetail = unknown>(
-  props: PageProps<TData, TDetail>
+const DataTable = <
+  TData,
+  TDataList,
+  TEditData = Record<any, any>,
+  TDetail = any
+>(
+  props: PageProps<TData, TDataList, TEditData, TDetail>
 ) => {
   const { toolBarProps, state, crudProps, columns, ...tblProProps } = props;
 
-  const { actionsRender = [], actionColProps = {} } = crudProps || {};
+  const {
+    actionsRender = [],
+    actionColProps = {},
+    resDetailFieldKey = ["data"],
+    resListFiledKey = ["data"],
+    listTotal,
+    listResponse,
+    editResponse,
+    editUrl,
+  } = crudProps || {};
   const detailRef = useRef<ActionType>();
 
   const { isEditMode, isViewMode, isAddMode } = useMemo(() => {
@@ -59,10 +87,11 @@ const DataTable = <TData extends any, TDetail = unknown>(
       isEditMode: modes.edit,
       isViewMode: modes.view,
       isAddMode: modes.add,
-    }
+    };
   }, [state.openCrudModal, state.crudType]);
 
-  const setCrudTypeAndModal = (type: CrudType | "reset") => {
+  const setCrudTypeAndModal = (type: CrudType | "reset", row = {}) => {
+    state.row = row;
     if (type === "reset") {
       state.openCrudModal = false;
       state.crudType = "table";
@@ -72,26 +101,25 @@ const DataTable = <TData extends any, TDetail = unknown>(
     }
   };
 
-  const onClickEdit = (row: any) => {
-    setCrudTypeAndModal("edit");
-    if (crudProps.editUrl) {
+  const onClickEdit = useMemoizedFn((row: TData) => {
+    setCrudTypeAndModal("edit", row);
+    if (editUrl(row as any)) {
       state.loadingEdit = true;
       axios
-        .get(crudProps.editUrl)
+        .get(editUrl(row as any))
         .then((res) => {
-          const getInd = (res?.data?.data ?? ([] as any[])).findIndex(
-            (item) => item.id === row.id
-          );
-          crudProps.form.setFieldsValue(res?.data?.data[getInd] || {});
+          const getRes = editResponse(res) as any;
+          console.log("getRes", getRes);
+          crudProps.form.setFieldsValue(getRes);
         })
         .catch(console.error)
         .finally(() => {
           state.loadingEdit = false;
         });
     } else {
-      crudProps.form.setFieldsValue(row);
+      crudProps.form.setFieldsValue(editResponse(row as any) as any);
     }
-  };
+  });
 
   const getColumns = useMemo(() => {
     return [
@@ -118,6 +146,7 @@ const DataTable = <TData extends any, TDetail = unknown>(
               shape="circle"
               key="edit"
               size="small"
+              loading={state.loadingEdit}
               onClick={() => onClickEdit(row)}
             >
               <EditFilled style={{ color: "white", fontSize: 15 }} />
@@ -130,16 +159,15 @@ const DataTable = <TData extends any, TDetail = unknown>(
           ].filter(Boolean),
         ...actionColProps,
       },
-    ] as typeof columns
+    ] as typeof columns;
   }, [columns]);
 
   return (
     <>
-      {(isAddMode || isEditMode) && (
+      {(isAddMode || (isEditMode && !state.loadingEdit)) && (
         <SchemaForm<TData>
-          form={crudProps.form}
+          form={crudProps.form as any}
           columns={columns as any}
-          loading={state.loadingEdit}
           layoutType="ModalForm"
           open={state.openCrudModal}
           modalProps={{
@@ -158,13 +186,14 @@ const DataTable = <TData extends any, TDetail = unknown>(
           actionRef={detailRef}
           columns={columns as any}
           title="columns"
-          request={async (params = {}) =>
-            (
-              await axios(crudProps.detailUrl, {
-                params,
-              })
-            ).data.data
-          }
+          request={async (params = {}) => {
+            const response = await axios(crudProps.detailUrl, { params });
+            console.log("response", response);
+            return resDetailFieldKey.reduce(
+              (obj, level) => obj[level],
+              response.data
+            );
+          }}
         />
       </Modal>
 
@@ -173,13 +202,23 @@ const DataTable = <TData extends any, TDetail = unknown>(
           labelWidth: "auto",
         }}
         columns={getColumns as any}
-        request={async (params = {}) =>
-          (
-            await axios(crudProps?.listUrl, {
-              params,
-            })
-          ).data
-        }
+        request={async (params = {}) => {
+          const response = await axios(crudProps.listUrl, { params });
+          if (listResponse) {
+            const getVal = listResponse?.(response);
+            return getVal;
+          }
+          const getRes = resListFiledKey.reduce(
+            (obj, level) => obj[level],
+            response
+          );
+          console.log("list response", getRes);
+          return {
+            data: getRes || [],
+            success: true,
+            total: listTotal,
+          };
+        }}
         pagination={{
           pageSize: 20,
         }}
