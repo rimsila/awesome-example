@@ -1,24 +1,25 @@
 import {
   FormInstance,
+  ParamsType,
   ProColumns,
   ProTable,
+  ProTableProps,
   RequestData,
 } from "@ant-design/pro-components";
-import { AxiosResponse } from "axios";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 
 export type Primitive =
-	| null
-	| undefined
-	| string
-	| number
-	| boolean
-	| symbol
-	| bigint;
-  
-export type LiteralUnion<
-	LiteralType,
-	BaseType extends Primitive,
-> = LiteralType | (BaseType & Record<never, never>);
+  | null
+  | undefined
+  | string
+  | number
+  | boolean
+  | symbol
+  | bigint;
+
+export type LiteralUnion<LiteralType, BaseType extends Primitive> =
+  | LiteralType
+  | (BaseType & Record<never, never>);
 
 declare namespace IDataTable {
   type ToolBarProps<TData> = {
@@ -29,9 +30,13 @@ declare namespace IDataTable {
 
   export type State<TEditData> = {
     openCrudModal?: boolean;
+    loadingEditSubmit?: boolean;
     loadingEdit?: boolean;
+    loadingDelete?: boolean;
+    loadingAdd?: boolean;
     crudType: CrudType;
     row?: Partial<TEditData>;
+    filter?: Partial<TEditData>;
   };
 
   export type PageProps<
@@ -43,7 +48,22 @@ declare namespace IDataTable {
     state: State<TData>;
     crudProps: {
       form: FormInstance<TEditData>;
-      editUrl?: (row: TEditData) => string;
+      viewConfigs?: (
+        row: TEditData,
+        params: ParamsType & {
+          pageSize?: number;
+          current?: number;
+          keyword?: string;
+        },
+      ) => Partial<AxiosResponse<TDataList, any>["config"]>;
+      editConfigs?: (
+        row: TEditData,
+        values?: TEditData
+      ) => Partial<AxiosResponse<TDataList, any>["config"]>;
+      addConfigs?: (
+        values: TEditData
+      ) => Partial<AxiosResponse<TDataList, any>["config"]>;
+      deleteUrl?: (row: TEditData) => string;
       detailUrl?: string;
       listUrl?: string;
       actionsRender?: any[];
@@ -52,15 +72,25 @@ declare namespace IDataTable {
       resListFiledKey?: string[];
       listTotal?: number;
       listResponse?: (res?: AxiosResponse<TDataList, any>) => RequestData<any>;
+      listConfigs?: (
+        params: ParamsType & {
+          pageSize?: number;
+          current?: number;
+          keyword?: string;
+        },
+        sort: Record<string, SortOrder>,
+        filter: Record<string, (string | number)[]>
+      ) => Partial<AxiosResponse<TDataList, any>["config"]>;
       editResponse?: (res?: AxiosResponse<TEditData, any>) => any;
       detailResponse?: (res?: AxiosResponse<TDetail, any>) => Partial<TDetail>;
       /**
        * use for unique ID
        */
       crudId?: string;
-      onModeChange?: (row: Partial<TData>) => void;
+      onModeChange?: (state: State<TData>) => void;
     };
     toolBarProps?: ToolBarProps<TData>;
+    axios: import("axios").AxiosStatic | import("axios").AxiosInstance;
   } & React.ComponentProps<typeof ProTable<TData>>;
 
   interface Link {

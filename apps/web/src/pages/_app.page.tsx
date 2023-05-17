@@ -1,9 +1,17 @@
 import { useRouter } from "next/router";
 import "../styles/globals.css";
 import "antd/dist/reset.css";
+import { ConfigProvider } from 'antd';
 
 import type { AppProps } from "next/app";
 import classNames from "classnames";
+import enUSIntl from 'antd/lib/locale/en_US';
+import km_KHIntl from 'antd/lib/locale/km_KH';
+
+const intlMap = {
+  enUSIntl,
+  km_KHIntl
+};
 
 const IconBack = () => {
   const { back, pathname } = useRouter();
@@ -46,9 +54,11 @@ export default function MyApp({ Component, ...rest }: AppProps) {
   );
 
   return (
-    <div className={clsWrapper}>
-      <Header title={title} />
+    <ConfigProvider locale={intlMap['enUSIntl']}>
+      <div className={clsWrapper}>
+        <Header title={title} />
         <Component {...rest} />
-    </div>
+      </div>
+    </ConfigProvider>
   );
 }

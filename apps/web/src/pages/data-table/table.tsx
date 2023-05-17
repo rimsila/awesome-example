@@ -1,21 +1,31 @@
 import EditFilled from "@ant-design/icons/EditFilled";
 import EyeFilled from "@ant-design/icons/EyeFilled";
 import PlusOutlined from "@ant-design/icons/PlusOutlined";
+import DeleteOutlined from "@ant-design/icons/DeleteOutlined";
+import DownOutlined from "@ant-design/icons/DownOutlined";
 
 import {
   ActionType,
   BetaSchemaForm as SchemaForm,
-  ProColumns,
   ProDescriptions,
   ProTable,
   TableDropdown,
-  RequestData,
 } from "@ant-design/pro-components";
-import { Button, FormInstance, Modal } from "antd";
-import { useMemo, useRef } from "react";
-import axios, { AxiosResponse } from "axios";
-import { useMemoizedFn } from "ahooks";
+import {
+  Button,
+  Modal,
+  Popconfirm,
+  Row,
+  message,
+  theme,
+  Skeleton,
+  Space,
+  Dropdown,
+} from "antd";
+import { MutableRefObject, Ref, useMemo, useRef } from "react";
+import { useLockFn, useMemoizedFn } from "ahooks";
 import { IDataTable } from "./type";
+import DropdownButton from "antd/es/dropdown/dropdown-button";
 
 const DataTable = <
   TData,
@@ -25,7 +35,9 @@ const DataTable = <
 >(
   props: IDataTable.PageProps<TData, TDataList, TEditData, TDetail>
 ) => {
-  const { toolBarProps, state, crudProps, columns, ...tblProProps } = props;
+  const { toolBarProps, state, crudProps, columns, axios, ...tblProProps } =
+    props;
+  const listActionRef = tblProProps.actionRef as MutableRefObject<ActionType>;
 
   const {
     actionsRender = [],
@@ -34,13 +46,18 @@ const DataTable = <
     resListFiledKey = ["data"],
     listTotal,
     listResponse,
+    listConfigs,
     editResponse,
-    editUrl,
+    editConfigs,
+    deleteUrl,
     crudId = "id",
     onModeChange,
+    addConfigs,
+    viewConfigs,
   } = crudProps || {};
 
   const detailRef = useRef<ActionType>();
+  const { token } = theme.useToken();
 
   const { isEditMode, isViewMode, isAddMode } = useMemo(() => {
     const openCrudModal = state.openCrudModal;
@@ -57,34 +74,41 @@ const DataTable = <
     };
   }, [state.openCrudModal, state.crudType]);
 
-  const setCrudMode = (
-    type: IDataTable.CrudType | "reset",
-    row: Partial<TData> = {}
-  ) => {
-    state.row = row;
-    if (type === "reset") {
-      state.openCrudModal = false;
-      state.crudType = "table";
-    } else {
-      state.openCrudModal = true;
-      state.crudType = type;
+  const setCrudMode = useMemoizedFn(
+    (type: IDataTable.CrudType | "reset", row: Partial<TData>) => {
+      state.row = row;
+
+      if (type === "view") {
+        detailRef.current?.reload();
+      }
+      if (type === "reset") {
+        state.openCrudModal = false;
+        state.row = {};
+        state.crudType = "table";
+        crudProps.form.resetFields();
+      } else {
+        state.openCrudModal = true;
+        state.crudType = type;
+      }
+      // callback fn every mode change
+      onModeChange?.(state);
     }
-    // callback fn every mode change
-    onModeChange?.(row);
-  };
+  );
 
   const onClickEdit = useMemoizedFn((row: TData) => {
     setCrudMode("edit", row);
-    if (editUrl(row as any)) {
+    if (editConfigs) {
       state.loadingEdit = true;
       axios
-        .get(editUrl(row as any))
+        .request({ method: "get", ...editConfigs(row) })
         .then((res) => {
           const getRes = editResponse(res) as any;
           console.log("getRes", getRes);
           crudProps.form.setFieldsValue(getRes);
         })
-        .catch(console.error)
+        .catch((err) => {
+          console.error(err);
+        })
         .finally(() => {
           state.loadingEdit = false;
         });
@@ -92,6 +116,26 @@ const DataTable = <
       crudProps.form.setFieldsValue(editResponse(row as any) as any);
     }
   });
+
+  const onClickDelete = (row: TEditData) => {
+    if (deleteUrl) {
+      state.loadingDelete = true;
+      axios
+        .delete(deleteUrl(row))
+        .then(() => {
+          message.success("Delete operation successfully");
+        })
+        .catch((err) => {
+          console.error(err);
+          const errMsg = err.message || "Delete operation failed";
+          message.error(errMsg);
+        })
+        .finally(() => {
+          listActionRef.current.reload();
+          state.loadingDelete = false;
+        });
+    }
+  };
 
   const getColumns = useMemo(() => {
     return [
@@ -108,23 +152,43 @@ const DataTable = <
               shape="circle"
               key="view"
               size="small"
-              onClick={() => setCrudMode("view")}
+              onClick={() => setCrudMode("view", row)}
             >
-              <EyeFilled style={{ color: "#1677ff", fontSize: 20 }} />
+              <EyeFilled style={{ color: token.colorInfo, fontSize: 20 }} />
             </Button>,
             <Button
               type="primary"
               shape="circle"
               key="edit"
               size="small"
-              loading={state.loadingEdit && row?.[crudId] === state?.row?.[crudId]}
+              loading={
+                state.loadingEdit && row?.[crudId] === state?.row?.[crudId]
+              }
               onClick={() => onClickEdit(row)}
             >
               <EditFilled style={{ color: "white", fontSize: 15 }} />
             </Button>,
             <TableDropdown
               key="more"
-              menus={[{ key: "delete", name: "Delete" }]}
+              menus={[
+                {
+                  disabled: state.loadingDelete,
+                  key: "delete",
+                  name: (
+                    <Popconfirm
+                      title="Are you sure to delete?"
+                      onConfirm={() => onClickDelete(row as any)}
+                    >
+                      <DeleteOutlined
+                        style={{
+                          color: token.colorError,
+                          fontSize: token.fontSizeLG,
+                        }}
+                      />
+                    </Popconfirm>
+                  ),
+                },
+              ]}
             />,
             ...actionsRender,
           ].filter(Boolean);
@@ -134,10 +198,58 @@ const DataTable = <
     ] as typeof columns;
   }, [columns]);
 
+  const onFinishAddOrEdit = useMemoizedFn(async (values: TEditData) => {
+    const isAddMode = state.crudType === "add";
+    if (addConfigs && isAddMode) {
+      state.loadingAdd = true;
+      const getConfigs = addConfigs(values);
+      axios
+        .request({
+          method: "post",
+          params: { ...values },
+          ...getConfigs,
+        })
+        .catch(console.error)
+        .finally(() => {
+          listActionRef.current.reload();
+          state.loadingAdd = false;
+          setCrudMode("reset", {});
+        });
+    }
+    // edit mode
+    else {
+      state.loadingEditSubmit = true;
+      axios
+        .request({
+          method: "put",
+          ...editConfigs(state.row as any, values),
+        })
+        .catch(console.error)
+        .finally(() => {
+          listActionRef.current.reload();
+          state.loadingEditSubmit = false;
+          setCrudMode("reset", {});
+        });
+    }
+  });
+
+  const requestView = useLockFn(async (...args) => {
+    const response = await axios(viewConfigs(state?.row, args));
+    const getRes = resDetailFieldKey.reduce(
+      (obj, level) => obj[level],
+      response.data
+    );
+    return {
+      data: getRes || [],
+      success: true,
+    };
+  });
+
   return (
     <>
       {(isAddMode || (isEditMode && !state.loadingEdit)) && (
-        <SchemaForm<TData>
+        <SchemaForm<TEditData>
+          onFinish={onFinishAddOrEdit}
           form={crudProps.form as any}
           columns={columns as any}
           layoutType="ModalForm"
@@ -149,23 +261,18 @@ const DataTable = <
           }}
         />
       )}
+
       <Modal
         open={isViewMode}
+        width="60%"
         title="View Mode"
-        onCancel={() => setCrudMode("reset")}
+        onCancel={() => setCrudMode("reset", {})}
       >
         <ProDescriptions
           actionRef={detailRef}
           columns={columns as any}
           title="columns"
-          request={async (params = {}) => {
-            const response = await axios(crudProps.detailUrl, { params });
-            console.log("response", response);
-            return resDetailFieldKey.reduce(
-              (obj, level) => obj[level],
-              response.data
-            );
-          }}
+          request={requestView}
         />
       </Modal>
 
@@ -173,9 +280,16 @@ const DataTable = <
         search={{
           labelWidth: "auto",
         }}
+        beforeSearchSubmit={(params) => {
+          const { pageSize, _timestamp, ...filter } = params || {};
+          state.filter = { ...(filter as TData) };
+          listActionRef.current?.reload();
+        }}
         columns={getColumns}
-        request={async (params = {}) => {
-          const response = await axios(crudProps.listUrl, { params });
+        request={async (params, ...args) => {
+          const response = await axios.request(
+            listConfigs({ ...params, ...state.filter }, ...args)
+          );
           if (listResponse) {
             const getVal = listResponse?.(response);
             return getVal;
@@ -191,14 +305,39 @@ const DataTable = <
             total: listTotal,
           };
         }}
-        pagination={{
-          pageSize: 20,
+        options={{
+          fullScreen: true,
+          setting: { draggable: true },
         }}
+        pagination={{ defaultPageSize: 10 }}
+        scroll={{ x: true }}
         rowKey="id"
         dateFormatter="string"
         headerTitle="Data Table"
         toolBarRender={() =>
           [
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: "1",
+                    label: "Excel",
+                  },
+                  {
+                    label: "PDF",
+                    key: "2",
+                  },
+                ],
+              }}
+              trigger={["click"]}
+            >
+              <Button>
+                <Space>
+                  Button
+                  <DownOutlined />
+                </Space>
+              </Button>
+            </Dropdown>,
             <Button
               key={"crud"}
               type="primary"
@@ -206,7 +345,7 @@ const DataTable = <
                 if (toolBarProps?.onAddClick) {
                   toolBarProps?.onAddClick();
                 } else {
-                  setCrudMode("add");
+                  setCrudMode("add", {});
                 }
               }}
               icon={<PlusOutlined />}
