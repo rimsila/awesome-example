@@ -3,53 +3,23 @@ import { ActionType, ProColumns } from "@ant-design/pro-components";
 import { Form } from "antd";
 import { useEffect, useRef } from "react";
 import { useReactive } from "ahooks";
-import DataTable, { State } from "./table";
-
-interface Link {
-  previous?: any;
-  current: string;
-  next: string;
-}
-
-interface Pagination {
-  total: number;
-  pages: number;
-  page: number;
-  limit: number;
-  links: Link;
-}
-
-interface Meta {
-  pagination: Pagination;
-}
-
-interface Data {
-  id: number;
-  name: string;
-  email: string;
-  gender: string;
-  status: string;
-}
-
-interface RootObject {
-  meta: Meta;
-  data: Data[];
-}
-interface EditObject {
-  meta: Meta;
-  data: Data;
-}
+import DataTable from "./table";
+import { IDataTable, LiteralUnion } from "./type";
 
 const Page = () => {
   const tblRef = useRef<ActionType>();
-  const tblState = useReactive<State<Data>>({
+  const tblState = useReactive<IDataTable.State<IDataTable.Data>>({
     openCrudModal: false,
     crudType: "table",
     row: {},
   });
-  const [editForm] = Form.useForm<Data>();
+  const [editForm] = Form.useForm<IDataTable.Data>();
 
-  const columns: ProColumns<Data[]>[] = [
+  const columns: Array<
+    Omit<ProColumns<IDataTable.Data>, "dataIndex"> & {
+      dataIndex: LiteralUnion<keyof IDataTable.Data, string>;
+    }
+  > = [
     {
       title: "ID",
       dataIndex: "id",
@@ -59,16 +29,33 @@ const Page = () => {
       title: "Name",
       dataIndex: "name",
     },
+    {
+      title: "Gender",
+      dataIndex: "gender",
+    },
+    {
+      title: "Email",
+      dataIndex: "email",
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+    },
   ];
 
   console.log("state", tblState);
 
   return (
     <>
-      <DataTable<Data[], RootObject, EditObject>
+      <DataTable<
+        IDataTable.Data[],
+        IDataTable.RootObject,
+        IDataTable.EditObject
+      >
         actionRef={tblRef}
         crudProps={{
           form: editForm,
+          onModeChange(row) {},
           listResponse(res) {
             return {
               data: res?.data?.data || [],
@@ -80,7 +67,7 @@ const Page = () => {
           listUrl: "https://gorest.co.in/public/v1/users",
           editResponse(res) {
             console.log("editResponse", res.data.data);
-            return  res.data.data
+            return res.data.data;
           },
         }}
         columns={columns}

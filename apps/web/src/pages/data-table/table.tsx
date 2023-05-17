@@ -15,43 +15,7 @@ import { Button, FormInstance, Modal } from "antd";
 import { useMemo, useRef } from "react";
 import axios, { AxiosResponse } from "axios";
 import { useMemoizedFn } from "ahooks";
-
-type ToolBarProps<TData> = {
-  onAddClick?: (v?: TData) => void;
-};
-
-type CrudType = "view" | "edit" | "table" | "add";
-
-export type State<TEditData> = {
-  openCrudModal?: boolean;
-  loadingEdit?: boolean;
-  crudType: CrudType;
-  row?: Partial<TEditData>;
-};
-
-export type PageProps<
-  TData,
-  TDataList,
-  TEditData = Record<any, any>,
-  TDetail = any
-> = {
-  state: State<TData>;
-  crudProps: {
-    form: FormInstance<TEditData>;
-    editUrl?: (row: TEditData) => string;
-    detailUrl?: string;
-    listUrl?: string;
-    actionsRender?: any[];
-    actionColProps?: ProColumns<TData, "text">;
-    resDetailFieldKey?: string[];
-    resListFiledKey?: string[];
-    listTotal?: number;
-    listResponse?: (res?: AxiosResponse<TDataList, any>) => RequestData<any>;
-    editResponse?: (res?: AxiosResponse<TEditData, any>) => any;
-    detailResponse?: (res?: AxiosResponse<TDetail, any>) => Partial<TDetail>;
-  };
-  toolBarProps?: ToolBarProps<TData>;
-} & React.ComponentProps<typeof ProTable<TData>>;
+import { IDataTable } from "./type";
 
 const DataTable = <
   TData,
@@ -59,7 +23,7 @@ const DataTable = <
   TEditData = Record<any, any>,
   TDetail = any
 >(
-  props: PageProps<TData, TDataList, TEditData, TDetail>
+  props: IDataTable.PageProps<TData, TDataList, TEditData, TDetail>
 ) => {
   const { toolBarProps, state, crudProps, columns, ...tblProProps } = props;
 
@@ -72,7 +36,10 @@ const DataTable = <
     listResponse,
     editResponse,
     editUrl,
+    crudId = "id",
+    onModeChange,
   } = crudProps || {};
+
   const detailRef = useRef<ActionType>();
 
   const { isEditMode, isViewMode, isAddMode } = useMemo(() => {
@@ -90,7 +57,10 @@ const DataTable = <
     };
   }, [state.openCrudModal, state.crudType]);
 
-  const setCrudTypeAndModal = (type: CrudType | "reset", row = {}) => {
+  const setCrudMode = (
+    type: IDataTable.CrudType | "reset",
+    row: Partial<TData> = {}
+  ) => {
     state.row = row;
     if (type === "reset") {
       state.openCrudModal = false;
@@ -99,10 +69,12 @@ const DataTable = <
       state.openCrudModal = true;
       state.crudType = type;
     }
+    // callback fn every mode change
+    onModeChange?.(row);
   };
 
   const onClickEdit = useMemoizedFn((row: TData) => {
-    setCrudTypeAndModal("edit", row);
+    setCrudMode("edit", row);
     if (editUrl(row as any)) {
       state.loadingEdit = true;
       axios
@@ -130,14 +102,13 @@ const DataTable = <
         align: "center",
         width: 110,
         valueType: "option",
-        dataIndex: "id",
-        render: (text, row) =>
-          [
+        render: (_, row) => {
+          return [
             <Button
               shape="circle"
               key="view"
               size="small"
-              onClick={() => setCrudTypeAndModal("view")}
+              onClick={() => setCrudMode("view")}
             >
               <EyeFilled style={{ color: "#1677ff", fontSize: 20 }} />
             </Button>,
@@ -146,7 +117,7 @@ const DataTable = <
               shape="circle"
               key="edit"
               size="small"
-              loading={state.loadingEdit}
+              loading={state.loadingEdit && row?.[crudId] === state?.row?.[crudId]}
               onClick={() => onClickEdit(row)}
             >
               <EditFilled style={{ color: "white", fontSize: 15 }} />
@@ -156,7 +127,8 @@ const DataTable = <
               menus={[{ key: "delete", name: "Delete" }]}
             />,
             ...actionsRender,
-          ].filter(Boolean),
+          ].filter(Boolean);
+        },
         ...actionColProps,
       },
     ] as typeof columns;
@@ -180,7 +152,7 @@ const DataTable = <
       <Modal
         open={isViewMode}
         title="View Mode"
-        onCancel={() => setCrudTypeAndModal("reset")}
+        onCancel={() => setCrudMode("reset")}
       >
         <ProDescriptions
           actionRef={detailRef}
@@ -201,7 +173,7 @@ const DataTable = <
         search={{
           labelWidth: "auto",
         }}
-        columns={getColumns as any}
+        columns={getColumns}
         request={async (params = {}) => {
           const response = await axios(crudProps.listUrl, { params });
           if (listResponse) {
@@ -234,7 +206,7 @@ const DataTable = <
                 if (toolBarProps?.onAddClick) {
                   toolBarProps?.onAddClick();
                 } else {
-                  setCrudTypeAndModal("add");
+                  setCrudMode("add");
                 }
               }}
               icon={<PlusOutlined />}

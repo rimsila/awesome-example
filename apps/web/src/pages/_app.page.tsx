@@ -39,7 +39,6 @@ const Header = ({ title }: { title: any }) => {
 
 export default function MyApp({ Component, ...rest }: AppProps) {
   const { title = "", pageFull } = (rest?.router as any).state?.query || {};
-  console.log("pageFull", pageFull == "1");
 
   const clsWrapper = classNames(
     "flex flex-col h-screen w-full mx-auto bg-white",
