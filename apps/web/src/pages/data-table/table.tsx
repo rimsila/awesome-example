@@ -317,6 +317,7 @@ const DataTable = <
         toolBarRender={() =>
           [
             <Dropdown
+              key="export"
               menu={{
                 items: [
                   {
