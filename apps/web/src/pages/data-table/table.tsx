@@ -334,7 +334,7 @@ const DataTable = <
             >
               <Button>
                 <Space>
-                  Button
+                  Export
                   <DownOutlined />
                 </Space>
               </Button>

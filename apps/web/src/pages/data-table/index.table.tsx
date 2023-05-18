@@ -16,7 +16,6 @@ const Page = () => {
   });
   const [editForm] = Form.useForm<IDataTable.Data>();
 
-
   const columns: Array<
     Omit<ProColumns<IDataTable.Data[]>, "dataIndex"> & {
       dataIndex: LiteralUnion<keyof IDataTable.Data, string>;
