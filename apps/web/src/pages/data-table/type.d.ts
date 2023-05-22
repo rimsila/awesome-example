@@ -54,7 +54,7 @@ declare namespace IDataTable {
           pageSize?: number;
           current?: number;
           keyword?: string;
-        },
+        }
       ) => Partial<AxiosResponse<TDataList, any>["config"]>;
       editConfigs?: (
         row: TEditData,
@@ -91,6 +91,7 @@ declare namespace IDataTable {
     };
     toolBarProps?: ToolBarProps<TData>;
     axios: import("axios").AxiosStatic | import("axios").AxiosInstance;
+    columnsOptions?: ProColumns<TData, "text">;
   } & React.ComponentProps<typeof ProTable<TData>>;
 
   interface Link {

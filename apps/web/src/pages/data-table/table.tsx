@@ -23,9 +23,9 @@ import {
   Dropdown,
 } from "antd";
 import { MutableRefObject, Ref, useMemo, useRef } from "react";
-import { useLockFn, useMemoizedFn } from "ahooks";
+import { useFullscreen, useLockFn, useMemoizedFn } from "ahooks";
 import { IDataTable } from "./type";
-import DropdownButton from "antd/es/dropdown/dropdown-button";
+import Print from "../../utils/print";
 
 const DataTable = <
   TData,
@@ -35,9 +35,19 @@ const DataTable = <
 >(
   props: IDataTable.PageProps<TData, TDataList, TEditData, TDetail>
 ) => {
-  const { toolBarProps, state, crudProps, columns, axios, ...tblProProps } =
-    props;
+  const {
+    toolBarProps,
+    state,
+    crudProps,
+    columns,
+    columnsOptions,
+    axios,
+    ...tblProProps
+  } = props;
   const listActionRef = tblProProps.actionRef as MutableRefObject<ActionType>;
+  const [, { enterFullscreen }] = useFullscreen(() =>
+    document.getElementById("data-table")
+  );
 
   const {
     actionsRender = [],
@@ -139,13 +149,14 @@ const DataTable = <
 
   const getColumns = useMemo(() => {
     return [
-      ...columns,
+      ...columns.map((colItem) => ({ ...colItem, ...columnsOptions })),
       {
         fixed: "right",
         title: "Actions",
         align: "center",
         width: 110,
         valueType: "option",
+        className: "print:hidden block",
         render: (_, row) => {
           return [
             <Button
@@ -196,7 +207,7 @@ const DataTable = <
         ...actionColProps,
       },
     ] as typeof columns;
-  }, [columns]);
+  }, [columns, columnsOptions]);
 
   const onFinishAddOrEdit = useMemoizedFn(async (values: TEditData) => {
     const isAddMode = state.crudType === "add";
@@ -277,6 +288,7 @@ const DataTable = <
       </Modal>
 
       <ProTable<TData>
+        id="data-table"
         search={{
           labelWidth: "auto",
         }}
@@ -327,6 +339,13 @@ const DataTable = <
                   {
                     label: "PDF",
                     key: "2",
+                  },
+                  {
+                    label: "PDF (Print)",
+                    key: "3",
+                    onClick: () => {
+                      Print(document.getElementById("data-table"));
+                    },
                   },
                 ],
               }}
