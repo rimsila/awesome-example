@@ -1,3 +1,4 @@
+
 interface PrintFunction {
   extendOptions: Function;
   getStyle: Function;
