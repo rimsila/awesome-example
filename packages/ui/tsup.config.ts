@@ -8,6 +8,7 @@ export default defineConfig((options: Options) => ({
   dts: true,
   minify: true,
   clean: true,
+  exclude: ["**/*.test.ts", "tsup.config.ts", "dist"],
   external: ["react"],
   ...options,
 }));
