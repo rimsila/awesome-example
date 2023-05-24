@@ -10,6 +10,7 @@ import {
   ProDescriptions,
   ProTable,
   TableDropdown,
+  ProColumns,
 } from "@ant-design/pro-components";
 import {
   Button,
@@ -23,12 +24,12 @@ import {
   Dropdown,
 } from "antd";
 import { MutableRefObject, Ref, useMemo, useRef } from "react";
-import { useFullscreen, useLockFn, useMemoizedFn } from "ahooks";
+import { useLockFn, useMemoizedFn } from "ahooks";
 import { IDataTable } from "./type";
-import Print from "../../utils/print";
+import Print from "@/utils/print";
 
 const DataTable = <
-  TData,
+  TData extends Record<any, any>,
   TDataList,
   TEditData = Record<any, any>,
   TDetail = any
@@ -45,9 +46,6 @@ const DataTable = <
     ...tblProProps
   } = props;
   const listActionRef = tblProProps.actionRef as MutableRefObject<ActionType>;
-  const [, { enterFullscreen }] = useFullscreen(() =>
-    document.getElementById("data-table")
-  );
 
   const {
     actionsRender = [],
@@ -112,7 +110,7 @@ const DataTable = <
       axios
         .request({ method: "get", ...editConfigs(row) })
         .then((res) => {
-          const getRes = editResponse(res) as any;
+          const getRes = editResponse?.(res) as any;
           console.log("getRes", getRes);
           crudProps.form.setFieldsValue(getRes);
         })
@@ -123,7 +121,7 @@ const DataTable = <
           state.loadingEdit = false;
         });
     } else {
-      crudProps.form.setFieldsValue(editResponse(row as any) as any);
+      crudProps.form.setFieldsValue(editResponse?.(row as any) as any);
     }
   });
 
@@ -148,13 +146,14 @@ const DataTable = <
   };
 
   const getColumns = useMemo(() => {
-    return [
+    const allCols = [
       ...columns.map((colItem) => ({ ...colItem, ...columnsOptions })),
       {
         fixed: "right",
         title: "Actions",
         align: "center",
         width: 110,
+        hideInReport: true,
         valueType: "option",
         className: "print:hidden block",
         render: (_, row) => {
@@ -206,7 +205,12 @@ const DataTable = <
         },
         ...actionColProps,
       },
-    ] as typeof columns;
+    ] as IDataTable.CustomColumns<TData, "text">[];
+
+    if (state.openReport) {
+      return allCols?.filter((i) => !i.hideInReport);
+    }
+    return allCols;
   }, [columns, columnsOptions]);
 
   const onFinishAddOrEdit = useMemoizedFn(async (values: TEditData) => {
@@ -330,6 +334,9 @@ const DataTable = <
           [
             <Dropdown
               key="export"
+              onOpenChange={(open) => {
+                state.openReport = false;
+              }}
               menu={{
                 items: [
                   {
@@ -344,7 +351,10 @@ const DataTable = <
                     label: "PDF (Print)",
                     key: "3",
                     onClick: () => {
-                      Print(document.getElementById("data-table"));
+                      state.openReport = true;
+                      setTimeout(() => {
+                        Print(document.getElementById("data-table"));
+                      }, 500);
                     },
                   },
                 ],

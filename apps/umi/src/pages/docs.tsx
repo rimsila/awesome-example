@@ -1,4 +1,4 @@
-import { ActionType, ProColumns } from "@ant-design/pro-components";
+import { ActionType } from "@ant-design/pro-components";
 import { Form } from "antd";
 import { useRef } from "react";
 import { useReactive } from "ahooks";
@@ -17,7 +17,7 @@ const Page = () => {
   const [editForm] = Form.useForm<IDataTable.Data>();
 
   const columns: Array<
-    Omit<ProColumns<IDataTable.Data[]>, "dataIndex"> & {
+    Omit<IDataTable.CustomColumns<IDataTable.Data, "id">, "dataIndex"> & {
       dataIndex: LiteralUnion<keyof IDataTable.Data, string>;
     }
   > = [

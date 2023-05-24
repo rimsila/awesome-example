@@ -30,6 +30,7 @@ export namespace IDataTable {
 
   export type State<TEditData> = {
     openCrudModal?: boolean;
+    openReport?: boolean;
     loadingEditSubmit?: boolean;
     loadingEdit?: boolean;
     loadingDelete?: boolean;
@@ -93,6 +94,13 @@ export namespace IDataTable {
     axios: import("axios").AxiosStatic | import("axios").AxiosInstance;
     columnsOptions?: ProColumns<TData, "text">;
   } & React.ComponentProps<typeof ProTable<TData>>;
+
+  export type CustomColumns<TData, Key extends keyof TData> = ProColumns<
+    TData,
+    Key
+  > & {
+    hideInReport?: boolean;
+  };
 
   interface Link {
     previous?: any;
