@@ -1,4 +1,3 @@
-//@ts-nocheck
 import EditFilled from "@ant-design/icons/EditFilled";
 import EyeFilled from "@ant-design/icons/EyeFilled";
 import PlusOutlined from "@ant-design/icons/PlusOutlined";
@@ -26,10 +25,10 @@ import {
 import { MutableRefObject, Ref, useMemo, useRef } from "react";
 import { useFullscreen, useLockFn, useMemoizedFn } from "ahooks";
 import { IDataTable } from "./type";
-// import Print from "../../utils/print";
+import Print from "../../utils/print";
 
 const DataTable = <
-  TData extends Record<any, any>,
+  TData,
   TDataList,
   TEditData = Record<any, any>,
   TDetail = any
@@ -113,7 +112,7 @@ const DataTable = <
       axios
         .request({ method: "get", ...editConfigs(row) })
         .then((res) => {
-          const getRes = editResponse?.(res) as any;
+          const getRes = editResponse(res) as any;
           console.log("getRes", getRes);
           crudProps.form.setFieldsValue(getRes);
         })
@@ -124,7 +123,7 @@ const DataTable = <
           state.loadingEdit = false;
         });
     } else {
-      crudProps.form.setFieldsValue(editResponse?.(row as any) as any);
+      crudProps.form.setFieldsValue(editResponse(row as any) as any);
     }
   });
 
@@ -345,7 +344,7 @@ const DataTable = <
                     label: "PDF (Print)",
                     key: "3",
                     onClick: () => {
-                      // Print(document.getElementById("data-table"));
+                      Print(document.getElementById("data-table"));
                     },
                   },
                 ],
