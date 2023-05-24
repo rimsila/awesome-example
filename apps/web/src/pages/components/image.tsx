@@ -2,18 +2,14 @@ import React, { useState, useEffect, useMemo } from "react";
 
 export type ImageProps = Pick<
   JSX.IntrinsicElements["img"],
-  "src" | "width" | "height"
+  "src" | "width" | "height" |'alt'
 > & {
   disableCache?: boolean;
   imageLoadedCallback?: (params?: Record<any, any>) => void;
   loadingElement?: React.ReactNode;
   blurredProps?: JSX.IntrinsicElements["div"];
   imgProps?: JSX.IntrinsicElements["img"];
-  /**
-
-@see https://blurha.sh/
-*/
-  blurImg?: string;
+  blurSrc?: string;
 };
 
 const BLUR_IMG =
@@ -28,7 +24,7 @@ function ImageComp({
   loadingElement,
   blurredProps,
   imgProps,
-  blurImg = BLUR_IMG,
+  blurSrc = BLUR_IMG,
 }: ImageProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -69,12 +65,11 @@ function ImageComp({
   }
 
   const blurredBackgroundStyle = {
-    backgroundImage: `url(${blurImg})`,
+    backgroundImage: `url(${blurSrc})`,
   };
 
-  const blurredClassName = `${
-    blurredProps?.className ?? ""
-  } blur-md min-h-[200px] rounded bg-cover bg-no-repeat`;
+  const blurredClassName = `blur-md min-h-[100px] rounded bg-cover bg-no-repeat 
+  ${blurredProps?.className ?? ""} `;
 
   return (
     <div
