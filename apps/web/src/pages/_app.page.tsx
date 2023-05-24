@@ -1,16 +1,17 @@
 import { useRouter } from "next/router";
 import "../styles/globals.css";
 import "antd/dist/reset.css";
-import { ConfigProvider } from 'antd';
+import { Button, ConfigProvider } from "antd";
 
 import type { AppProps } from "next/app";
 import classNames from "classnames";
-import enUSIntl from 'antd/lib/locale/en_US';
-import km_KHIntl from 'antd/lib/locale/km_KH';
+import enUSIntl from "antd/lib/locale/en_US";
+import km_KHIntl from "antd/lib/locale/km_KH";
+import { ReloadOutlined } from "@ant-design/icons";
 
 const intlMap = {
   enUSIntl,
-  km_KHIntl
+  km_KHIntl,
 };
 
 const IconBack = () => {
@@ -41,6 +42,9 @@ const Header = ({ title }: { title: any }) => {
         </p>
       </div>
       <div />
+      <Button size="small" onClick={() => location.reload()}>
+        <ReloadOutlined />
+      </Button>
     </div>
   );
 };
@@ -54,7 +58,7 @@ export default function MyApp({ Component, ...rest }: AppProps) {
   );
 
   return (
-    <ConfigProvider locale={intlMap['enUSIntl']}>
+    <ConfigProvider locale={intlMap["enUSIntl"]}>
       <div className={clsWrapper}>
         <Header title={title} />
         <Component {...rest} />

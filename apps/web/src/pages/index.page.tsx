@@ -26,6 +26,11 @@ const Home = () => {
       icon: "https://via.placeholder.com/50",
       path: "/data-table",
       pageFull: 1
+    },
+    {
+      label: "Components",
+      icon: "https://via.placeholder.com/50",
+      path: "/components",
     }
   ];
 
