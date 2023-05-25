@@ -12,7 +12,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "umi": "^4.0.69",
-    "ui": "workspace:*"
+    "ui": "workspace:*",
+    "tailwind-config": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^18.0.33",

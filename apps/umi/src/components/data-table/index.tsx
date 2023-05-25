@@ -153,7 +153,6 @@ const DataTable = <
         title: "Actions",
         align: "center",
         width: 110,
-        hideInReport: true,
         valueType: "option",
         className: "print:hidden block",
         render: (_, row) => {
@@ -207,9 +206,6 @@ const DataTable = <
       },
     ] as IDataTable.CustomColumns<TData, "text">[];
 
-    if (state.openReport) {
-      return allCols?.filter((i) => !i.hideInReport);
-    }
     return allCols;
   }, [columns, columnsOptions]);
 
