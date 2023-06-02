@@ -22,6 +22,8 @@ import {
   Skeleton,
   Space,
   Dropdown,
+  notification,
+  Typography,
 } from "antd";
 import { MutableRefObject, Ref, useMemo, useRef } from "react";
 import { useLockFn, useMemoizedFn } from "ahooks";
@@ -235,11 +237,44 @@ const DataTable = <
           method: "put",
           ...editConfigs(state.row as any, values),
         })
-        .catch(console.error)
+        .then(() => {
+          notification.success({
+            message: "Success",
+            description: 'Operation successfully'
+          });
+
+          setCrudMode("reset", {});
+        })
+        .catch((e) => {
+          console.error(e);
+          const errData = Array.isArray(e?.response?.data?.data)
+            ? (e?.response?.data?.data as any[])
+            : [e?.response?.data?.data || {}];
+          const Msg = (
+            <Space direction="vertical">
+              {errData.map((errItem) => {
+                return (
+                  <div className="space-x-1">
+                    <Typography.Text strong className="capitalize">
+                      {errItem?.field}:
+                    </Typography.Text>
+                    <Typography.Text type="danger">
+                      {errItem?.message}
+                    </Typography.Text>
+                  </div>
+                );
+              })}
+            </Space>
+          );
+
+          notification.error({
+            message: "Invalid",
+            description: Msg,
+          });
+        })
         .finally(() => {
           listActionRef.current.reload();
           state.loadingEditSubmit = false;
-          setCrudMode("reset", {});
         });
     }
   });
