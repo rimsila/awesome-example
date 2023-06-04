@@ -11,6 +11,7 @@ import {
   ProTable,
   TableDropdown,
   ProColumns,
+  isDeepEqualReact,
 } from "@ant-design/pro-components";
 import {
   Button,
@@ -26,9 +27,10 @@ import {
   Typography,
 } from "antd";
 import { MutableRefObject, Ref, useMemo, useRef } from "react";
-import { useLockFn, useMemoizedFn } from "ahooks";
+import { useLockFn, useMemoizedFn, useResponsive } from "ahooks";
 import { IDataTable } from "./type";
 import Print from "@/utils/print";
+import { useMediaQuery } from "@/hooks/useMediaQr";
 
 const DataTable = <
   TData extends Record<any, any>,
@@ -64,10 +66,13 @@ const DataTable = <
     onModeChange,
     addConfigs,
     viewConfigs,
+    addEditProps,
   } = crudProps || {};
 
   const detailRef = useRef<ActionType>();
+  const { isSmUp } = useMediaQuery();
   const { token } = theme.useToken();
+  const { editTitle, ...restAddEdit } = addEditProps || {};
 
   const { isEditMode, isViewMode, isAddMode } = useMemo(() => {
     const openCrudModal = state.openCrudModal;
@@ -83,6 +88,7 @@ const DataTable = <
       isAddMode: modes.add,
     };
   }, [state.openCrudModal, state.crudType]);
+
 
   const setCrudMode = useMemoizedFn(
     (type: IDataTable.CrudType | "reset", row: Partial<TData>) => {
@@ -240,7 +246,7 @@ const DataTable = <
         .then(() => {
           notification.success({
             message: "Success",
-            description: 'Operation successfully'
+            description: "Operation successfully",
           });
 
           setCrudMode("reset", {});
@@ -305,6 +311,19 @@ const DataTable = <
               state.openCrudModal = false;
             },
           }}
+          {...{
+            rowProps: {
+              gutter: [10, 2],
+            },
+            colProps: {
+              span: 12,
+            },
+            grid: isSmUp,
+            ...(restAddEdit || ({} as any)),
+          }}
+          title={
+            isEditMode ? editTitle ?? addEditProps?.title : addEditProps?.title
+          }
         />
       )}
 

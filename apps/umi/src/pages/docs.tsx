@@ -60,6 +60,10 @@ const Page = () => {
         columns={columns}
         state={tblState}
         crudProps={{
+          addEditProps: {
+            title: "test",
+            editTitle: tblState?.row?.name,
+          },
           form: editForm,
           listResponse: (res) => ({
             data: res?.data?.data || [],

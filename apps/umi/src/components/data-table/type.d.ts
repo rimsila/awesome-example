@@ -5,8 +5,10 @@ import {
   ProTable,
   ProTableProps,
   RequestData,
+  BetaSchemaForm,
 } from "@ant-design/pro-components";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
+import React, { ReactNode } from "react";
 
 export type Primitive =
   | null
@@ -89,6 +91,14 @@ export namespace IDataTable {
        */
       crudId?: string;
       onModeChange?: (state: State<TData>) => void;
+      addEditProps?: Partial<
+        React.ComponentProps<typeof BetaSchemaForm<TEditData, "ModalForm">>
+      > & {
+        /**
+         * edit modal title
+         */
+        editTitle?: string | ReactNode;
+      };
     };
     toolBarProps?: ToolBarProps<TData>;
     axios: import("axios").AxiosStatic | import("axios").AxiosInstance;
