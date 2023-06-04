@@ -10,17 +10,13 @@ import {
   ProDescriptions,
   ProTable,
   TableDropdown,
-  ProColumns,
-  isDeepEqualReact,
 } from "@ant-design/pro-components";
 import {
   Button,
   Modal,
   Popconfirm,
-  Row,
   message,
   theme,
-  Skeleton,
   Space,
   Dropdown,
   notification,
@@ -31,6 +27,42 @@ import { useLockFn, useMemoizedFn, useResponsive } from "ahooks";
 import { IDataTable } from "./type";
 import Print from "@/utils/print";
 import { useMediaQuery } from "@/hooks/useMediaQr";
+
+function convertToCSV(tableData: object[]): string {
+  const headers = Object.keys(tableData[0]).join(",") + "\n";
+  const rows = tableData
+    .map((row) => {
+      return Object.values(row)
+        .map((value) => (typeof value === "string" ? `"${value}"` : value))
+        .join(",");
+    })
+    .join("\n");
+
+  return headers + rows;
+}
+
+function csvToBlob(csvData: string): Blob {
+  const BOM = "\uFEFF";
+  const csvBlob = new Blob([BOM + csvData], {
+    type: "text/csv;charset=utf-8;",
+  });
+  return csvBlob;
+}
+
+function downloadBlobAsXLSX(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName + ".xlsx";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportTableToXLSX(tableData: object[], fileName = "file"): void {
+  const csvData = convertToCSV(tableData);
+  const blob = csvToBlob(csvData);
+  downloadBlobAsXLSX(blob, fileName);
+}
 
 const DataTable = <
   TData extends Record<any, any>,
@@ -57,13 +89,13 @@ const DataTable = <
     resDetailFieldKey = ["data"],
     resListFiledKey = ["data"],
     listTotal,
-    listResponse,
-    listConfigs,
     deleteUrl,
     crudId = "id",
     onModeChange,
     addEditProps,
     detailProp,
+    listProps,
+    exportProps,
   } = crudProps || {};
 
   const detailRef = useRef<ActionType>();
@@ -77,6 +109,7 @@ const DataTable = <
     editResponse,
   } = addEditProps || {};
   const { detailTitle, desProps = {}, viewConfigs } = detailProp || {};
+  const { listResponse, listConfigs } = listProps || {};
 
   const { isEditMode, isViewMode, isAddMode } = useMemo(() => {
     const openCrudModal = state.openCrudModal;
@@ -112,7 +145,6 @@ const DataTable = <
       state.row = {};
       crudProps.form.resetFields();
       state.crudType = type;
-
     } else {
       state.openCrudModal = true;
       state.crudType = type;
@@ -205,6 +237,7 @@ const DataTable = <
                     <Popconfirm
                       title="Are you sure to delete?"
                       onConfirm={() => onClickDelete(row as any)}
+                      trigger={["click"]}
                     >
                       <DeleteOutlined
                         style={{
@@ -369,15 +402,22 @@ const DataTable = <
           );
           if (listResponse) {
             const getVal = listResponse?.(response);
-            return getVal;
+            state.dataSource = getVal?.data || [];
+
+            return {
+              data: getVal.data,
+              total: listTotal,
+              success: true,
+            };
           }
           const getRes = resListFiledKey.reduce(
             (obj, level) => obj[level],
             response
           );
-          console.log("list response", getRes);
+          // console.log("list response", getRes);
+
           return {
-            data: getRes || [],
+            data: getRes.data || [],
             success: true,
             total: listTotal,
           };
@@ -403,6 +443,26 @@ const DataTable = <
                   {
                     key: "1",
                     label: "Excel",
+                    onClick: async () => {
+                      const response = await axios.request(
+                        listConfigs?.(
+                          {
+                            ...state.filter,
+                            pageSize: 3000000,
+                          }
+                        )
+                      );
+                      if (listResponse) {
+                        const getVal = listResponse?.(response);
+                        // state.dataSource = getVal?.data || [];
+                        if (Array.isArray(getVal?.data)) {
+                          exportTableToXLSX(
+                            getVal?.data,
+                            exportProps?.filename
+                          );
+                        }
+                      }
+                    },
                   },
                   {
                     label: "PDF",

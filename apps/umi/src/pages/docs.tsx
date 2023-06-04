@@ -86,18 +86,23 @@ const Page = () => {
               url: `/users/${row?.id}`,
             }),
           },
-          listResponse: (res) => ({
-            data: res?.data?.data || [],
-            total: res?.data.meta.pagination.total,
-          }),
-          listConfigs: ({ pageSize, current, ...filter }) => ({
-            url: "/users",
-            params: {
-              per_page: pageSize,
-              page: current,
-              ...filter,
-            },
-          }),
+          exportProps: {
+            filename: "user_report",
+          },
+          listProps: {
+            listResponse: (res) => ({
+              data: res?.data?.data || [],
+              total: res?.data.meta.pagination.total,
+            }),
+            listConfigs: ({ pageSize, current, ...filter }) => ({
+              url: "/users",
+              params: {
+                per_page: pageSize,
+                page: current,
+                ...filter,
+              },
+            }),
+          },
           deleteUrl: ({ id }) => `/users/${id}`,
         }}
       />

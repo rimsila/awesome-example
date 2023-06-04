@@ -34,6 +34,7 @@ export namespace IDataTable {
   export type State<TEditData> = {
     openCrudModal?: boolean;
     openReport?: boolean;
+    dataSource?: TEditData[];
     loadingEditSubmit?: boolean;
     loadingEdit?: boolean;
     loadingDelete?: boolean;
@@ -54,6 +55,9 @@ export namespace IDataTable {
       form: FormInstance<TEditData>;
       deleteUrl?: (row: TEditData) => string;
       detailUrl?: string;
+      exportProps?: {
+        filename?: string;
+      };
       detailProp?: {
         detailTitle?: string | ReactNode;
         desProps?: ProDescriptionsProps;
@@ -72,16 +76,21 @@ export namespace IDataTable {
       resDetailFieldKey?: string[];
       resListFiledKey?: string[];
       listTotal?: number;
-      listResponse?: (res?: AxiosResponse<TDataList, any>) => RequestData<any>;
-      listConfigs?: (
-        params: ParamsType & {
-          pageSize?: number;
-          current?: number;
-          keyword?: string;
-        },
-        sort: Record<string, SortOrder>,
-        filter: Record<string, (string | number)[]>
-      ) => Partial<AxiosResponse<TDataList, any>["config"]>;
+      listProps?: {
+        listResponse?: (
+          res?: AxiosResponse<TDataList, any>
+        ) => RequestData<any>;
+        listConfigs?: (
+          params: ParamsType & {
+            pageSize?: number;
+            current?: number;
+            keyword?: string;
+          },
+          sort?: Record<string, SortOrder>,
+          filter?: Record<string, (string | number)[]>
+        ) => Partial<AxiosResponse<TDataList, any>["config"]>;
+      };
+
       detailResponse?: (res?: AxiosResponse<TDetail, any>) => Partial<TDetail>;
       /**
        * use for unique ID
