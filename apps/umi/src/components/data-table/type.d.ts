@@ -6,6 +6,7 @@ import {
   ProTableProps,
   RequestData,
   BetaSchemaForm,
+  ProDescriptionsProps,
 } from "@ant-design/pro-components";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import React, { ReactNode } from "react";
@@ -51,23 +52,20 @@ export namespace IDataTable {
     state: State<TData>;
     crudProps: {
       form: FormInstance<TEditData>;
-      viewConfigs?: (
-        row: TEditData,
-        params: ParamsType & {
-          pageSize?: number;
-          current?: number;
-          keyword?: string;
-        }
-      ) => Partial<AxiosResponse<TDataList, any>["config"]>;
-      editConfigs?: (
-        row: TEditData,
-        values?: TEditData
-      ) => Partial<AxiosResponse<TDataList, any>["config"]>;
-      addConfigs?: (
-        values: TEditData
-      ) => Partial<AxiosResponse<TDataList, any>["config"]>;
       deleteUrl?: (row: TEditData) => string;
       detailUrl?: string;
+      detailProp?: {
+        detailTitle?: string | ReactNode;
+        desProps?: ProDescriptionsProps;
+        viewConfigs?: (
+          row: TEditData,
+          params: ParamsType & {
+            pageSize?: number;
+            current?: number;
+            keyword?: string;
+          }
+        ) => Partial<AxiosResponse<TDataList, any>["config"]>;
+      };
       listUrl?: string;
       actionsRender?: any[];
       actionColProps?: ProColumns<TData, "text">;
@@ -84,20 +82,28 @@ export namespace IDataTable {
         sort: Record<string, SortOrder>,
         filter: Record<string, (string | number)[]>
       ) => Partial<AxiosResponse<TDataList, any>["config"]>;
-      editResponse?: (res?: AxiosResponse<TEditData, any>) => any;
       detailResponse?: (res?: AxiosResponse<TDetail, any>) => Partial<TDetail>;
       /**
        * use for unique ID
        */
       crudId?: string;
       onModeChange?: (state: State<TData>) => void;
-      addEditProps?: Partial<
-        React.ComponentProps<typeof BetaSchemaForm<TEditData, "ModalForm">>
-      > & {
+      addEditProps?: {
         /**
          * edit modal title
          */
         editTitle?: string | ReactNode;
+        addConfigs?: (
+          values: TEditData
+        ) => Partial<AxiosResponse<TDataList, any>["config"]>;
+        editConfigs?: (
+          row: TEditData,
+          values?: TEditData
+        ) => Partial<AxiosResponse<TDataList, any>["config"]>;
+        editResponse?: (res?: AxiosResponse<TEditData, any>) => any;
+        uiProps?: Partial<
+          React.ComponentProps<typeof BetaSchemaForm<TEditData, "ModalForm">>
+        >;
       };
     };
     toolBarProps?: ToolBarProps<TData>;

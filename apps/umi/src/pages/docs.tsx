@@ -60,11 +60,32 @@ const Page = () => {
         columns={columns}
         state={tblState}
         crudProps={{
-          addEditProps: {
-            title: "test",
-            editTitle: tblState?.row?.name,
-          },
           form: editForm,
+          // addEditProps
+          addEditProps: {
+            title: "Create User",
+            addConfigs: (params) => {
+              return {
+                url: "/users",
+                params,
+              };
+            },
+            editTitle: `Edit user: ${tblState?.row?.name}`,
+            editConfigs: (row, data) => {
+              return {
+                url: `/users/${row.id}`,
+                data,
+              };
+            },
+            editResponse: (res) => res.data.data,
+          },
+          // view props
+          detailProp: {
+            detailTitle: `Detail user: ${tblState?.row?.name}`,
+            viewConfigs: (row) => ({
+              url: `/users/${row?.id}`,
+            }),
+          },
           listResponse: (res) => ({
             data: res?.data?.data || [],
             total: res?.data.meta.pagination.total,
@@ -77,23 +98,7 @@ const Page = () => {
               ...filter,
             },
           }),
-          addConfigs: (params) => {
-            return {
-              url: "/users",
-              params,
-            };
-          },
-          editConfigs: (row, data) => {
-            return {
-              url: `/users/${row.id}`,
-              data,
-            };
-          },
-          editResponse: (res) => res.data.data,
           deleteUrl: ({ id }) => `/users/${id}`,
-          viewConfigs: (row) => ({
-            url: `/users/${row?.id}`,
-          }),
         }}
       />
     </>

@@ -59,20 +59,24 @@ const DataTable = <
     listTotal,
     listResponse,
     listConfigs,
-    editResponse,
-    editConfigs,
     deleteUrl,
     crudId = "id",
     onModeChange,
-    addConfigs,
-    viewConfigs,
     addEditProps,
+    detailProp,
   } = crudProps || {};
 
   const detailRef = useRef<ActionType>();
   const { isSmUp } = useMediaQuery();
   const { token } = theme.useToken();
-  const { editTitle, ...restAddEdit } = addEditProps || {};
+  const {
+    editTitle,
+    addConfigs,
+    editConfigs,
+    uiProps = {},
+    editResponse,
+  } = addEditProps || {};
+  const { detailTitle, desProps = {}, viewConfigs } = detailProp || {};
 
   const { isEditMode, isViewMode, isAddMode } = useMemo(() => {
     const openCrudModal = state.openCrudModal;
@@ -89,27 +93,33 @@ const DataTable = <
     };
   }, [state.openCrudModal, state.crudType]);
 
+  const setCrudMode = (
+    type: IDataTable.CrudType | "reset",
+    row: Partial<TData>
+  ) => {
+    state.row = row;
 
-  const setCrudMode = useMemoizedFn(
-    (type: IDataTable.CrudType | "reset", row: Partial<TData>) => {
-      state.row = row;
-
-      if (type === "view") {
-        detailRef.current?.reload();
-      }
-      if (type === "reset") {
-        state.openCrudModal = false;
-        state.row = {};
-        state.crudType = "table";
-        crudProps.form.resetFields();
-      } else {
-        state.openCrudModal = true;
-        state.crudType = type;
-      }
-      // callback fn every mode change
-      onModeChange?.(state);
+    if (type === "view") {
+      detailRef.current?.reload();
     }
-  );
+    if (type === "reset") {
+      state.openCrudModal = false;
+      state.row = {};
+      state.crudType = "table";
+      crudProps.form.resetFields();
+    } else if (type === "add") {
+      state.openCrudModal = true;
+      state.row = {};
+      crudProps.form.resetFields();
+      state.crudType = type;
+
+    } else {
+      state.openCrudModal = true;
+      state.crudType = type;
+    }
+    // callback fn every mode change
+    onModeChange?.(state);
+  };
 
   const onClickEdit = useMemoizedFn((row: TData) => {
     setCrudMode("edit", row);
@@ -309,6 +319,7 @@ const DataTable = <
           modalProps={{
             onCancel(_) {
               state.openCrudModal = false;
+              state.crudType = "table";
             },
           }}
           {...{
@@ -319,7 +330,7 @@ const DataTable = <
               span: 12,
             },
             grid: isSmUp,
-            ...(restAddEdit || ({} as any)),
+            ...(uiProps || ({} as any)),
           }}
           title={
             isEditMode ? editTitle ?? addEditProps?.title : addEditProps?.title
@@ -330,14 +341,14 @@ const DataTable = <
       <Modal
         open={isViewMode}
         width="60%"
-        title="View Mode"
+        title={detailTitle || "View"}
         onCancel={() => setCrudMode("reset", {})}
       >
         <ProDescriptions
           actionRef={detailRef}
           columns={columns as any}
-          title="columns"
           request={requestView}
+          {...desProps}
         />
       </Modal>
 
