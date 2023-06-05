@@ -12,7 +12,6 @@ const Page = () => {
     openCrudModal: false,
     crudType: "table",
     row: {},
-    filter: {},
   });
   const [editForm] = Form.useForm<IDataTable.Data>();
 
@@ -37,14 +36,23 @@ const Page = () => {
     {
       title: "Gender",
       dataIndex: "gender",
+      formItemProps: {
+        rules: [{ required: true }],
+      },
     },
     {
       title: "Email",
       dataIndex: "email",
+      formItemProps: {
+        rules: [{ required: true }],
+      },
     },
     {
       title: "Status",
       dataIndex: "status",
+      formItemProps: {
+        rules: [{ required: true }],
+      },
     },
   ];
 
@@ -88,6 +96,10 @@ const Page = () => {
           },
           exportProps: {
             filename: "user_report",
+            exportResponseData: (res) => ({
+              data: res?.data?.data || [],
+              total: res?.data.meta.pagination.total,
+            }),
           },
           listProps: {
             listResponse: (res) => ({

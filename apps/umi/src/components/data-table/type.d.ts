@@ -57,6 +57,9 @@ export namespace IDataTable {
       detailUrl?: string;
       exportProps?: {
         filename?: string;
+        exportResponseData?: (
+          res?: AxiosResponse<TDataList, any>
+        ) => RequestData<any>;
       };
       detailProp?: {
         detailTitle?: string | ReactNode;
@@ -102,6 +105,10 @@ export namespace IDataTable {
          * edit modal title
          */
         editTitle?: string | ReactNode;
+         /**
+         * add title
+         */
+        title?: string | ReactNode;
         addConfigs?: (
           values: TEditData
         ) => Partial<AxiosResponse<TDataList, any>["config"]>;

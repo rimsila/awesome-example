@@ -22,8 +22,8 @@ import {
   notification,
   Typography,
 } from "antd";
-import { MutableRefObject, Ref, useMemo, useRef } from "react";
-import { useLockFn, useMemoizedFn, useResponsive } from "ahooks";
+import { MutableRefObject, useMemo, useRef } from "react";
+import { useLockFn, useMemoizedFn } from "ahooks";
 import { IDataTable } from "./type";
 import Print from "@/utils/print";
 import { useMediaQuery } from "@/hooks/useMediaQr";
@@ -110,6 +110,7 @@ const DataTable = <
   } = addEditProps || {};
   const { detailTitle, desProps = {}, viewConfigs } = detailProp || {};
   const { listResponse, listConfigs } = listProps || {};
+  const { exportResponseData } = exportProps || {};
 
   const { isEditMode, isViewMode, isAddMode } = useMemo(() => {
     const openCrudModal = state.openCrudModal;
@@ -373,7 +374,7 @@ const DataTable = <
 
       <Modal
         open={isViewMode}
-        width="60%"
+        width="70%"
         title={detailTitle || "View"}
         onCancel={() => setCrudMode("reset", {})}
       >
@@ -398,15 +399,14 @@ const DataTable = <
         columns={getColumns}
         request={async (params, ...args) => {
           const response = await axios.request(
-            listConfigs({ ...params, ...state.filter }, ...args)
+            listConfigs({ ...state.filter, ...params }, ...args)
           );
           if (listResponse) {
             const getVal = listResponse?.(response);
             state.dataSource = getVal?.data || [];
 
             return {
-              data: getVal.data,
-              total: listTotal,
+              ...getVal,
               success: true,
             };
           }
@@ -445,28 +445,17 @@ const DataTable = <
                     label: "Excel",
                     onClick: async () => {
                       const response = await axios.request(
-                        listConfigs?.(
-                          {
-                            ...state.filter,
-                            pageSize: 3000000,
-                          }
-                        )
+                        listConfigs?.({
+                          ...state.filter,
+                          pageSize: 100,
+                        })
                       );
-                      if (listResponse) {
-                        const getVal = listResponse?.(response);
-                        // state.dataSource = getVal?.data || [];
-                        if (Array.isArray(getVal?.data)) {
-                          exportTableToXLSX(
-                            getVal?.data,
-                            exportProps?.filename
-                          );
-                        }
+                      const getVal = exportResponseData?.(response);
+                      // state.dataSource = getVal?.data || [];
+                      if (Array.isArray(getVal?.data)) {
+                        exportTableToXLSX(getVal?.data, exportProps?.filename);
                       }
                     },
-                  },
-                  {
-                    label: "PDF",
-                    key: "2",
                   },
                   {
                     label: "PDF (Print)",
