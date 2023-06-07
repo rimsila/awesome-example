@@ -31,7 +31,7 @@ export namespace IDataTable {
 
   type CrudType = "view" | "edit" | "table" | "add";
 
-  export type State<TEditData> = {
+  export type State<TEditData = unknown> = {
     openCrudModal?: boolean;
     openReport?: boolean;
     dataSource?: TEditData[];
@@ -56,6 +56,7 @@ export namespace IDataTable {
       deleteUrl?: (row: TEditData) => string;
       detailUrl?: string;
       exportProps?: {
+        hasFilter?: boolean;
         filename?: string;
         exportResponseData?: (
           res?: AxiosResponse<TDataList, any>

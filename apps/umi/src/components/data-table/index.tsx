@@ -27,42 +27,8 @@ import { useLockFn, useMemoizedFn } from "ahooks";
 import { IDataTable } from "./type";
 import Print from "@/utils/print";
 import { useMediaQuery } from "@/hooks/useMediaQr";
+import TblExport from "./export";
 
-function convertToCSV(tableData: object[]): string {
-  const headers = Object.keys(tableData[0]).join(",") + "\n";
-  const rows = tableData
-    .map((row) => {
-      return Object.values(row)
-        .map((value) => (typeof value === "string" ? `"${value}"` : value))
-        .join(",");
-    })
-    .join("\n");
-
-  return headers + rows;
-}
-
-function csvToBlob(csvData: string): Blob {
-  const BOM = "\uFEFF";
-  const csvBlob = new Blob([BOM + csvData], {
-    type: "text/csv;charset=utf-8;",
-  });
-  return csvBlob;
-}
-
-function downloadBlobAsXLSX(blob: Blob, fileName: string): void {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName + ".xlsx";
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-function exportTableToXLSX(tableData: object[], fileName = "file"): void {
-  const csvData = convertToCSV(tableData);
-  const blob = csvToBlob(csvData);
-  downloadBlobAsXLSX(blob, fileName);
-}
 
 const DataTable = <
   TData extends Record<any, any>,
@@ -433,51 +399,7 @@ const DataTable = <
         headerTitle="Data Table"
         toolBarRender={() =>
           [
-            <Dropdown
-              key="export"
-              onOpenChange={(open) => {
-                state.openReport = false;
-              }}
-              menu={{
-                items: [
-                  {
-                    key: "1",
-                    label: "Excel",
-                    onClick: async () => {
-                      const response = await axios.request(
-                        listConfigs?.({
-                          ...state.filter,
-                          pageSize: 100,
-                        })
-                      );
-                      const getVal = exportResponseData?.(response);
-                      // state.dataSource = getVal?.data || [];
-                      if (Array.isArray(getVal?.data)) {
-                        exportTableToXLSX(getVal?.data, exportProps?.filename);
-                      }
-                    },
-                  },
-                  {
-                    label: "PDF (Print)",
-                    key: "3",
-                    onClick: () => {
-                      state.openReport = true;
-                      setTimeout(() => {
-                        Print(document.getElementById("data-table"));
-                      }, 500);
-                    },
-                  },
-                ],
-              }}
-              trigger={["click"]}
-            >
-              <Button>
-                <Space>
-                  Export
-                  <DownOutlined />
-                </Space>
-              </Button>
-            </Dropdown>,
+            <TblExport key="export" {...props} />,
             <Button
               key={"crud"}
               type="primary"
