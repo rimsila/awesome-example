@@ -42,6 +42,7 @@ export namespace IDataTable {
     crudType: CrudType;
     row?: Partial<TEditData>;
     filter?: Partial<TEditData>;
+    exportType?: 'pdf' | 'csv' | 'xslx' | undefined
   };
 
   export type PageProps<
@@ -56,7 +57,7 @@ export namespace IDataTable {
       deleteUrl?: (row: TEditData) => string;
       detailUrl?: string;
       exportProps?: {
-        hasFilter?: boolean;
+        hideFilter?: boolean;
         filename?: string;
         exportResponseData?: (
           res?: AxiosResponse<TDataList, any>
