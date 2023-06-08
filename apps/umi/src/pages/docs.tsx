@@ -39,6 +39,16 @@ const Page = () => {
       formItemProps: {
         rules: [{ required: true }],
       },
+      valueEnum: {
+        male: {
+          text: "Male",
+          status: "male",
+        },
+        female: {
+          text: "Female",
+          status: "female",
+        },
+      },
     },
     {
       title: "Email",
@@ -52,6 +62,16 @@ const Page = () => {
       dataIndex: "status",
       formItemProps: {
         rules: [{ required: true }],
+      },
+      valueEnum: {
+        active: {
+          text: "Active",
+          status: "active",
+        },
+        inactive: {
+          text: "Inactive",
+          status: "inactive",
+        },
       },
     },
   ];

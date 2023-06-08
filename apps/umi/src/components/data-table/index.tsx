@@ -28,7 +28,7 @@ import { IDataTable } from "./type";
 import Print from "@/utils/print";
 import { useMediaQuery } from "@/hooks/useMediaQr";
 import TblExport from "./export";
-
+import { useLocation, useSearchParams } from "umi";
 
 const DataTable = <
   TData extends Record<any, any>,
@@ -66,7 +66,9 @@ const DataTable = <
 
   const detailRef = useRef<ActionType>();
   const { isSmUp } = useMediaQuery();
+  const [params, setParams] = useSearchParams();
   const { token } = theme.useToken();
+
   const {
     editTitle,
     addConfigs,
@@ -238,11 +240,44 @@ const DataTable = <
           params: { ...values },
           ...getConfigs,
         })
-        .catch(console.error)
+        .then(() => {
+          notification.success({
+            message: "Success",
+            description: "Operation successfully",
+          });
+
+          setCrudMode("reset", {});
+        })
+        .catch((e) => {
+          console.error(e);
+          const errData = Array.isArray(e?.response?.data?.data)
+            ? (e?.response?.data?.data as any[])
+            : [e?.response?.data?.data || {}];
+          const Msg = (
+            <Space direction="vertical">
+              {errData.map((errItem) => {
+                return (
+                  <div className="space-x-1">
+                    <Typography.Text strong className="capitalize">
+                      {errItem?.field}:
+                    </Typography.Text>
+                    <Typography.Text type="danger">
+                      {errItem?.message}
+                    </Typography.Text>
+                  </div>
+                );
+              })}
+            </Space>
+          );
+
+          notification.error({
+            message: "Invalid",
+            description: Msg,
+          });
+        })
         .finally(() => {
           listActionRef.current.reload();
           state.loadingAdd = false;
-          setCrudMode("reset", {});
         });
     }
     // edit mode
@@ -311,6 +346,7 @@ const DataTable = <
     <>
       {(isAddMode || (isEditMode && !state.loadingEdit)) && (
         <SchemaForm<TEditData>
+          submitter={{ submitButtonProps: { loading: state.loadingAdd } }}
           onFinish={onFinishAddOrEdit}
           form={crudProps.form as any}
           columns={columns as any}
@@ -392,7 +428,15 @@ const DataTable = <
           fullScreen: true,
           setting: { draggable: true },
         }}
-        pagination={{ defaultPageSize: 10 }}
+        pagination={{
+          defaultPageSize: 10,
+          current: +params.get("current") || 1,
+          pageSize: +params.get("pageSize") || 10,
+        }}
+        onChange={(e) => {
+          // console.log("ee", e);
+          setParams({ pageSize: e?.pageSize, current: e?.current });
+        }}
         scroll={{ x: true }}
         rowKey="id"
         dateFormatter="string"
