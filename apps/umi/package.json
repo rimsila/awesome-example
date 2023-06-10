@@ -14,11 +14,11 @@
     "axios": "^1.4.0",
     "ahooks": "^3.7.7",
     "@ant-design/icons": "^5.1.4",
-    "antd": "^5.6.0",
+    "antd": "^5.6.1",
     "classnames": "^2.3.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "umi": "^4.0.69",
+    "umi": "^4.0.70",
     "ui": "workspace:*",
     "tailwind-config": "workspace:*"
   },

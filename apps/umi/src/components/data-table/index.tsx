@@ -2,7 +2,6 @@ import EditFilled from "@ant-design/icons/EditFilled";
 import EyeFilled from "@ant-design/icons/EyeFilled";
 import PlusOutlined from "@ant-design/icons/PlusOutlined";
 import DeleteOutlined from "@ant-design/icons/DeleteOutlined";
-import DownOutlined from "@ant-design/icons/DownOutlined";
 
 import {
   ActionType,
@@ -18,17 +17,17 @@ import {
   message,
   theme,
   Space,
-  Dropdown,
   notification,
   Typography,
+  Tag,
 } from "antd";
-import { MutableRefObject, useMemo, useRef } from "react";
+import { Fragment, MutableRefObject, useMemo, useRef } from "react";
 import { useLockFn, useMemoizedFn } from "ahooks";
 import { IDataTable } from "./type";
-import Print from "@/utils/print";
 import { useMediaQuery } from "@/hooks/useMediaQr";
 import TblExport from "./export";
 import { useLocation, useSearchParams } from "umi";
+import StatisticCard from "./StatisticCard";
 
 const DataTable = <
   TData extends Record<any, any>,
@@ -166,12 +165,57 @@ const DataTable = <
 
   const getColumns = useMemo(() => {
     const allCols = [
-      ...columns.map((colItem) => ({ ...colItem, ...columnsOptions })),
+      ...columns.map((colItem) => {
+        if (colItem?.renderStatistic) {
+          colItem.render = (_, entity) => {
+            const { ...tagItems } = colItem?.renderStatistic(entity) || {};
+            return <StatisticCard />;
+          };
+        }
+
+        if (colItem?.renderTag) {
+          colItem.render = (_, entity) => {
+            const {
+              data,
+              direction = "horizontal",
+              ...tagItems
+            } = colItem?.renderTag(entity) || {};
+            const renderTag = (
+              <Tag
+                className="capitalize min-w-[50px] text-center"
+                {...tagItems}
+              >
+                {tagItems?.children || "-"}
+              </Tag>
+            );
+            // multiple tags
+            if (Array.isArray(data)) {
+              return (
+                <Space align="center" size="small" direction={direction}>
+                  {data.map((i, tagKey) => {
+                    return (
+                      <Tag
+                        key={tagKey}
+                        className="capitalize min-w-[50px] text-center"
+                        {...tagItems}
+                      >
+                        {i}
+                      </Tag>
+                    );
+                  })}
+                </Space>
+              );
+            }
+            return renderTag;
+          };
+        }
+        return { ...colItem, ...columnsOptions };
+      }),
       {
         fixed: "right",
         title: "Actions",
         align: "center",
-        width: 110,
+        width: 120,
         valueType: "option",
         className: "print:hidden block",
         render: (_, row) => {
@@ -197,7 +241,6 @@ const DataTable = <
               <EditFilled style={{ color: "white", fontSize: 15 }} />
             </Button>,
             <TableDropdown
-              key="more"
               menus={[
                 {
                   disabled: state.loadingDelete,
@@ -430,8 +473,9 @@ const DataTable = <
         }}
         pagination={{
           defaultPageSize: 10,
-          current: +params.get("current") || 1,
-          pageSize: +params.get("pageSize") || 10,
+          current: Number(params.get("current")) || 1,
+          pageSize: Number(params?.get("pageSize")) || 10,
+          showQuickJumper: true,
         }}
         onChange={(e) => {
           // console.log("ee", e);

@@ -1,5 +1,5 @@
 import { ActionType } from "@ant-design/pro-components";
-import { Form } from "antd";
+import { Form, Tag, TagProps } from "antd";
 import { useRef } from "react";
 import { useReactive } from "ahooks";
 import DataTable from "@/components/data-table";
@@ -59,7 +59,6 @@ const Page = () => {
     },
     {
       title: "Status",
-      dataIndex: "status",
       formItemProps: {
         rules: [{ required: true }],
       },
@@ -72,6 +71,16 @@ const Page = () => {
           text: "Inactive",
           status: "inactive",
         },
+      },
+      renderTag: ({ status }) => {
+        const statusColor: Record<string, TagProps["color"]> = {
+          active: "success",
+          inactive: "magenta",
+        };
+        return {
+          color: statusColor[status],
+          children: status,
+        };
       },
     },
   ];
