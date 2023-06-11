@@ -59,6 +59,7 @@ const Page = () => {
     },
     {
       title: "Status",
+      dataIndex: "status",
       formItemProps: {
         rules: [{ required: true }],
       },
