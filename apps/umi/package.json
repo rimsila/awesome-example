@@ -9,16 +9,16 @@
     "start": "npm run dev"
   },
   "dependencies": {
-    "@ant-design/pro-provider":"^2.10.2",
-    "@ant-design/pro-components": "^2.5.5",
+    "@ant-design/pro-provider":"^2.10.5",
+    "@ant-design/pro-components": "^2.6.2",
     "axios": "^1.4.0",
     "ahooks": "^3.7.7",
     "@ant-design/icons": "^5.1.4",
-    "antd": "^5.6.1",
+    "antd": "^5.6.2",
     "classnames": "^2.3.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "umi": "^4.0.70",
+    "umi": "^4.0.71",
     "ui": "workspace:*",
     "tailwind-config": "workspace:*"
   },
