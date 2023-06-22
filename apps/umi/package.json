@@ -6,10 +6,11 @@
     "build": "umi build",
     "postinstall": "umi setup",
     "setup": "umi setup",
-    "start": "npm run dev"
+    "start": "npm run dev",
+    "surge": "npm run build && cp dist/index.html dist/200.html && surge dist test168.surge.sh"
   },
   "dependencies": {
-    "@ant-design/pro-provider":"^2.10.5",
+    "@ant-design/pro-provider": "^2.10.5",
     "@ant-design/pro-components": "^2.6.2",
     "axios": "^1.4.0",
     "ahooks": "^3.7.7",
